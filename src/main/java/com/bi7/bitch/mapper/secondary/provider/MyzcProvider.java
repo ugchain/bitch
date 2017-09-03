@@ -22,7 +22,7 @@ public class MyzcProvider {
     }
 
     public String updateTxidAndStatus() {
-        return "update " + config.getSecondaryDbPrefix() + "_myzc zc set zc.txid = #{txid}，zc.status = #{status} where zc.id = #{id}";
+        return "update " + config.getSecondaryDbPrefix() + "_myzc zc set zc.txid = #{txid},zc.status = #{status} where zc.id = #{id}";
     }
 
     public String findOne() {

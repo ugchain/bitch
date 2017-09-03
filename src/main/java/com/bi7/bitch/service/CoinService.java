@@ -60,11 +60,11 @@ public class CoinService {
     }
 
     public Msg withdraw(int zcId, int userid, String address, CoinName coinname, String value, String fee) {
-
+        BigInteger val = null;
         try {
-            BigInteger val_num = decimalsUtil.decode(value, coinname.getDecimals());
-            if (val_num.compareTo(coinname.getWithdrawLimit()) > 0) {
-                throw new Exception(String.format("withdraw value > limit,value: %s, fee: %s, limit: %d", val_num, fee, coinname.getWithdrawLimit()));
+            val = decimalsUtil.decode(value, coinname.getDecimals());
+            if (val.compareTo(coinname.getWithdrawLimit()) > 0) {
+                throw new Exception(String.format("withdraw value > limit,value: %s, fee: %s, limit: %d", val, fee, coinname.getWithdrawLimit()));
             }
         } catch (Exception e) {
             log.error("", e);
@@ -74,9 +74,11 @@ public class CoinService {
         udpate bitch_coin
         update myzc
          */
-        BigInteger val = decimalsUtil.decode(value, coinname.getDecimals());
+//        BigInteger val = decimalsUtil.decode(value, coinname.getDecimals());
         BigInteger feeExact = decimalsUtil.decode(fee, coinname.getDecimals());
         EthereumInputData idata = null;
+        //TODO ERROR : 先创建 tx ，插入成功后，再send
+
         try {
             idata = web3.sendTransaction(address, coinname, val);
         } catch (Exception e) {
@@ -102,6 +104,7 @@ public class CoinService {
         bitchCoin.setGasUsed(idata.getGasUsed().intValue());
         bitchCoin.setGasPrice(idata.getGasPrice().intValue());
         bitchCoin.setStatus(WithdrawStatusEnum.PENDING.getId());
+        bitchCoin.setTxid(idata.getTxid());
         Date date = new Date();
         bitchCoin.setAddtime(date);
         bitchCoin.setUpdatetime(date);

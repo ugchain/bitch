@@ -49,7 +49,7 @@ public class CoinDao {
         try {
             myzcDao.saveWithdraw(bitchCoin.getRid(), bitchCoin.getTxid(), bitchCoin.getStatus());
         } catch (Exception e) {
-            throw new RuntimeException();
+            throw new RuntimeException(e);
         }
     }
 

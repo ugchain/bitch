@@ -12,6 +12,7 @@ import org.web3j.protocol.exceptions.TransactionTimeoutException;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.util.concurrent.Future;
 
 /**
  * Created by foxer on 2017/8/30.
@@ -30,8 +31,4 @@ public class UGT extends AbstractEthContractCoin {
         return CoinName.UGT;
     }
 
-    @Override
-    public TransactionReceipt transfer(String toAddress, BigInteger value) throws IOException, InterruptedException, TransactionTimeoutException {
-        return null;
-    }
 }
