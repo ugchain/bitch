@@ -1,9 +1,12 @@
 package com.bi7.bitch;
 
 import com.bi7.bitch.chain.InputData;
+import com.bi7.bitch.chain.ethereum.ETH;
 import com.bi7.bitch.chain.ethereum.contract.impl.UGT;
 import com.bi7.bitch.conf.CoinName;
 import com.bi7.bitch.conf.GethConfig;
+import com.bi7.bitch.response.Msg;
+import com.bi7.bitch.service.CoinService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.web3j.crypto.Credentials;
@@ -16,6 +19,7 @@ import org.web3j.utils.Numeric;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.nio.file.Files;
 
 /**
@@ -60,14 +64,27 @@ public class Test {
     private GethConfig config;
 
     @Autowired
+    private CoinService coinService;
+
+    @Autowired
     private Web3j web3j;
 
     public void init() {
         UGT token = (UGT) CoinName.UGT.getCoin();
-        String b = token.getBalance("0x45326b4c3D46B621aCc432ebE3B30583eB48CAb7");
+        BigInteger b = token.getBalance("0xb549dc36c1035b1d9e5e000602c3800df5a6930f");
         InputData idata = token.getTransactionById("0x464501bb15d00d2a9e904cd5d9d6c9fc9536e84e10f2bc434fae83f222119245");
 
-        System.out.println(Convert.fromWei(new BigDecimal(Numeric.toBigInt(b)), Convert.Unit.ETHER));
-        System.out.println(idata.toString());
+        ETH eth = (ETH) CoinName.ETH.getCoin();
+        BigInteger b2 = eth.getBalance("0x2b8bd9aa8c1d4dc69edb24b9b1e7f4bf37f68674");
+        InputData idata2 = eth.getTransactionById("0xaad4949b326b195663b641b99084d8cb5b48d2afba24712ac84bf39c90b10597");
+
+
+        System.out.println(Convert.fromWei(new BigDecimal((b2)), Convert.Unit.ETHER));
+        System.out.println(idata2.toString());
+
+
+        Msg msg = coinService.withdraw(8, 74, "0x2b8bd9aa8c1d4dc69edb24b9b1e7f4bf37f68674", CoinName.ETH, "1.123456", "0.0045");
+        System.out.println(msg.toString());
+
     }
 }

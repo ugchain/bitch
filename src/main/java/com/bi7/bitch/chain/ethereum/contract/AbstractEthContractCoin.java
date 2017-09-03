@@ -88,7 +88,11 @@ public abstract class AbstractEthContractCoin implements ICoin {
     public InputData deserizeTransaction(Transaction transaction) {
         String from = transaction.getFrom();
         BigInteger blockNumber;
-        blockNumber = transaction.getBlockNumber();
+        if (transaction.getBlockNumberRaw() == null) {
+            blockNumber = BigInteger.ZERO;
+        } else {
+            blockNumber = transaction.getBlockNumber();
+        }
         String data = transaction.getInput();
         ContractInputData inputData = new ContractInputData();
         deserizeInput(data, inputData);
@@ -102,7 +106,7 @@ public abstract class AbstractEthContractCoin implements ICoin {
     }
 
 
-    public String getBalance(String address) {
+    public BigInteger getBalance(String address) {
         Address addressA = new Address(address);
         Function function = new Function("balanceOf", Arrays.<Type>asList(addressA), Collections.<TypeReference<?>>emptyList());
         String dataHex = FunctionEncoder.encode(function);
@@ -113,11 +117,11 @@ public abstract class AbstractEthContractCoin implements ICoin {
             if (value.equals("0x")) {
                 value = "0x0";
             }
-            return value;
+            return Numeric.toBigInt(value);
         } catch (IOException e) {
             log.error("IOException while transfer ", e);
         }
-        return "0";
+        return BigInteger.ZERO;
     }
 
     public String transfer(String fromAddress, String toAddress, BigInteger value) {

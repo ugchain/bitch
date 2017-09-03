@@ -4,10 +4,12 @@ import com.bi7.bitch.SpringBeanFactoryUtils;
 import com.bi7.bitch.chain.ICoin;
 import com.bi7.bitch.chain.ethereum.ETH;
 import com.bi7.bitch.chain.ethereum.contract.impl.UGT;
+import com.bi7.bitch.util.DecimalsUtil;
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.WalletUtils;
 import org.web3j.protocol.Web3j;
 
+import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,9 +35,10 @@ public enum CoinName {
 
 
     CoinName(String coinname, String realCoinName, int withdrawLimit, int decimals, int localDecimals, ICoin coin) {
+        DecimalsUtil decimalsUtil = SpringBeanFactoryUtils.getBean(DecimalsUtil.class);
         this.coinname = coinname;
         this.realCoinName = realCoinName;
-        this.withdrawLimit = withdrawLimit;
+        this.withdrawLimit = decimalsUtil.decode(String.valueOf(withdrawLimit), decimals);
         this.decimals = decimals;
         this.localDecimals = localDecimals;
         this.coin = coin;
@@ -45,7 +48,7 @@ public enum CoinName {
 
     private String coinname;
     private String realCoinName;
-    private int withdrawLimit;
+    private BigInteger withdrawLimit;
     private int decimals;
     private int localDecimals;
 
@@ -59,7 +62,7 @@ public enum CoinName {
         return decimals;
     }
 
-    public int getWithdrawLimit() {
+    public BigInteger getWithdrawLimit() {
         return withdrawLimit;
     }
 

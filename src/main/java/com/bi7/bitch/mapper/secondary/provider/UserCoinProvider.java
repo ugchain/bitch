@@ -19,10 +19,7 @@ public class UserCoinProvider {
     }
 
     public String updateCoinBalance(Map<String, Object> map) {
-
-        System.out.println(map.get("coinname"));
         String coinname = map.get("coinname").toString();
-
         return "update " + config.getSecondaryDbPrefix() + "_user_coin  set " + coinname + " = " + coinname + " + #{incval} where userid = #{userid}";
     }
 }

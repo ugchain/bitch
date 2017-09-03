@@ -34,7 +34,6 @@ public class DecimalsUtil {
     public BigInteger decode(String value, int decimals) {
         BigDecimal dec = new BigDecimal(value);
         dec = dec.multiply(new BigDecimal(10).pow(decimals));
-        System.out.println(dec);
         return dec.toBigIntegerExact();
 
     }

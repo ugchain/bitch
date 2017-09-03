@@ -200,6 +200,10 @@ public class ScheduledWork {
             idata.setTxid(transaction.getHash());
             idata.setGasPrice(Convert.fromWei(new BigDecimal(transaction.getGasPrice()), Convert.Unit.GWEI).toBigInteger());
             idata.setGasUsed(transaction.getGas());
+            //TODO 正常情况下不会发生，以为 scanBlock 根据区块数来衡量
+            if (transaction.getBlockNumberRaw() == null) {
+                return;
+            }
             idata.setBlockNumber(transaction.getBlockNumber());
             idata.setFrom(transaction.getFrom());
             idata.setTo(transaction.getTo());

@@ -62,8 +62,8 @@ public class CoinService {
     public Msg withdraw(int zcId, int userid, String address, CoinName coinname, String value, String fee) {
 
         try {
-            int val_num = Integer.parseInt(value);
-            if (coinname.getWithdrawLimit() < val_num) {
+            BigInteger val_num = decimalsUtil.decode(value, coinname.getDecimals());
+            if (val_num.compareTo(coinname.getWithdrawLimit()) > 0) {
                 throw new Exception(String.format("withdraw value > limit,value: %s, fee: %s, limit: %d", val_num, fee, coinname.getWithdrawLimit()));
             }
         } catch (Exception e) {
@@ -78,10 +78,11 @@ public class CoinService {
         BigInteger feeExact = decimalsUtil.decode(fee, coinname.getDecimals());
         EthereumInputData idata = null;
         try {
-
-            web3.sendTransaction(address, coinname, val);
+            idata = web3.sendTransaction(address, coinname, val);
         } catch (Exception e) {
-
+            e.printStackTrace();
+            log.error("", e);
+            return Msg.ERROR;
         }
         /*
         create tx
@@ -97,8 +98,7 @@ public class CoinService {
         bitchCoin.setTo(address);
         bitchCoin.setValue(val.toString());
         bitchCoin.setFee(feeExact.toString());
-//        bitchCoin.setBlockNumber(idata.getBlockNumber().intValue());  未知
-
+        bitchCoin.setBlockNumber(0);
         bitchCoin.setGasUsed(idata.getGasUsed().intValue());
         bitchCoin.setGasPrice(idata.getGasPrice().intValue());
         bitchCoin.setStatus(WithdrawStatusEnum.PENDING.getId());
@@ -165,6 +165,10 @@ public class CoinService {
                 update status to success
              */
 
+            //正常情况下不可能发生，若监听区块的程序正常，那么处于pendding 状态的tx 是不会进入数据库中的
+            if (tx.getBlockNumberRaw() == null) {
+                return;
+            }
             if (bitchCoin.getBlockNumber() != tx.getBlockNumber().intValue()) {
                 Logs.scheduledLogger.error(String.format("blockNumber error,bitchCoin.getBlockNumber: %d, tx.getBlockNumber: %d, txid: %s",
                         bitchCoin.getBlockNumber(), tx.getBlockNumber().intValue(), bitchCoin.getTxid()));
@@ -209,8 +213,11 @@ public class CoinService {
                 return;
             }
             Transaction tx = optTrans.get();
-            if (this.currentBlockNumber > tx.getBlockNumber().intValue() + SAFETY_ETH_BLOCKNUMBER) {
-                coinDao.updateWithdrawStatus(bitchCoin.getRid(), tx.getBlockNumber().intValue(), WithdrawStatusEnum.SUCCESS.getId());
+            //TODO getBlockNumber 应该根据 Raw 判断是否为 null，否则会抛异常，由于pedding状态的 tx 没有 blockNumber 数据
+            if (tx.getBlockNumberRaw() != null) {
+                if (this.currentBlockNumber > tx.getBlockNumber().intValue() + SAFETY_ETH_BLOCKNUMBER) {
+                    coinDao.updateWithdrawStatus(bitchCoin.getRid(), tx.getBlockNumber().intValue(), WithdrawStatusEnum.SUCCESS.getId());
+                }
             }
         });
     }

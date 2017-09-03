@@ -12,7 +12,7 @@ import java.math.BigInteger;
  */
 public interface ICoin {
 
-    String getBalance(String address);
+    BigInteger getBalance(String address);
 
     TransactionReceipt transfer(String toAddress, BigInteger value) throws IOException, InterruptedException, TransactionTimeoutException;
 

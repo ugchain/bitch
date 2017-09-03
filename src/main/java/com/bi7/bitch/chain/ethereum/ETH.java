@@ -15,19 +15,11 @@ public class ETH extends AbstractEthCoin {
         super(web3, credentials, chainId);
     }
 
-    @Override
-    public String getBalance(String address) {
-        return null;
-    }
+
 
     @Override
     public CoinName getCoinName() {
         return CoinName.ETH;
     }
 
-
-    @Override
-    protected boolean isSuccess(String txid) {
-        return false;
-    }
 }

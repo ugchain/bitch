@@ -40,7 +40,7 @@ public class GethConfig {
     private BigInteger withdrawGasPrice;
     private BigInteger withdrawGasLimit;
 
-    private byte chainId = 4;
+    private byte chainId = ChainId.MAIN_NET;
 
     public byte getChainId() {
         return chainId;
@@ -51,7 +51,6 @@ public class GethConfig {
 
     public void init() throws Exception {
         System.out.println(String.format("GethConfig.init    gasPrice: %s, gasLimit: %s", getWithdrawGasPrice().toString(), getWithdrawGasLimit().toString()));
-
 
         String blockNumberStr = null;
         try {
@@ -104,19 +103,20 @@ public class GethConfig {
     }
 
     public void setCredentials(String credentialsPath) {
-        System.out.println(this.getKeystorePassPhrase());
         try {
             credentials = WalletUtils.loadCredentials(this.getKeystorePassPhrase(), credentialsPath);
         } catch (IOException e) {
-            log.error(e.getMessage());
+            log.error("", e);
             e.printStackTrace();
             System.exit(1);
         } catch (CipherException e) {
             e.printStackTrace();
-            log.error(e.getMessage());
+            log.error("", e);
             System.exit(1);
         } catch (Exception e) {
-
+            e.printStackTrace();
+            log.error("", e);
+            System.exit(1);
         }
     }
 
@@ -160,7 +160,7 @@ public class GethConfig {
             e.printStackTrace();
             System.exit(1);
         }
-        this.keystorePassPhrase = keystorePassPhrase;
+        this.keystorePassPhrase = ret;
     }
 
     public void saveLastedBlockNumber(int blockNumber) {
