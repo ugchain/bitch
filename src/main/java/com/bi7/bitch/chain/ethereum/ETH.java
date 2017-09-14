@@ -15,8 +15,6 @@ public class ETH extends AbstractEthCoin {
         super(web3, credentials, chainId);
     }
 
-
-
     @Override
     public CoinName getCoinName() {
         return CoinName.ETH;

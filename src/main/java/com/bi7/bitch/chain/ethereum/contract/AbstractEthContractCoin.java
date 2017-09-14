@@ -4,8 +4,9 @@ import com.bi7.bitch.Logs;
 import com.bi7.bitch.SpringBeanFactoryUtils;
 import com.bi7.bitch.chain.ICoin;
 import com.bi7.bitch.chain.InputData;
-import com.bi7.bitch.conf.CoinName;
 import com.bi7.bitch.conf.GethConfig;
+import com.bi7.web3j.tx.AsyncTransfer;
+import com.bi7.web3j.tx.LocalTransaction;
 import org.apache.commons.logging.Log;
 import org.web3j.abi.FunctionEncoder;
 import org.web3j.abi.TypeReference;
@@ -16,10 +17,9 @@ import org.web3j.abi.datatypes.generated.Uint256;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameterName;
-import org.web3j.protocol.core.DefaultBlockParameterNumber;
 import org.web3j.protocol.core.Request;
-import org.web3j.protocol.core.methods.response.*;
-import org.web3j.protocol.exceptions.TransactionTimeoutException;
+import org.web3j.protocol.core.methods.response.EthTransaction;
+import org.web3j.protocol.core.methods.response.Transaction;
 import org.web3j.tx.RawTransactionManager;
 import org.web3j.utils.Convert;
 import org.web3j.utils.Numeric;
@@ -29,18 +29,12 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.function.Consumer;
-
-import static org.web3j.tx.ManagedTransaction.GAS_PRICE;
 
 /**
  * Created by foxer on 2017/8/28.
  */
-public abstract class AbstractEthContractCoin implements ICoin {
+public abstract class AbstractEthContractCoin extends AsyncTransfer implements ICoin {
 
     private final static Log log = Logs.getLogger(AbstractEthContractCoin.class);
 
@@ -53,13 +47,14 @@ public abstract class AbstractEthContractCoin implements ICoin {
     protected GethConfig gethConfig = SpringBeanFactoryUtils.getBean(GethConfig.class);
 
     public AbstractEthContractCoin(Web3j web3, Credentials credentials, String contractAddress, byte chainId) {
+        super(web3, credentials, chainId);
         this.web3 = web3;
         this.credentials = credentials;
         this.contractAddress = contractAddress;
         token = Token.load(contractAddress, web3, new RawTransactionManager(web3, credentials, chainId), gethConfig.getWithdrawGasPrice(), gethConfig.getWithdrawGasLimit());
     }
 
-    protected void deserizeInput(String data, InputData inputData) {
+    protected boolean deserizeInput(String data, InputData inputData) {
         if (data.substring(0, 10).equals("0xa9059cbb")) {
             String to = data.substring(34, 74);
             String hexTo = Numeric.prependHexPrefix(to);
@@ -67,12 +62,14 @@ public abstract class AbstractEthContractCoin implements ICoin {
             BigInteger valueBigInteger = Numeric.toBigInt(value);
             inputData.setTo(hexTo);
             inputData.setValue(valueBigInteger);
+            return true;
         } else {
             log.info("not transfer tx");
+            return false;
         }
     }
 
-    public InputData getTransactionById(String transactionHash) {
+    public Optional<InputData> getTransactionById(String transactionHash) {
         Request<?, EthTransaction> ethTransactionRequest = web3.ethGetTransactionByHash(transactionHash);
         try {
             EthTransaction ethTransaction = ethTransactionRequest.send();
@@ -84,10 +81,10 @@ public abstract class AbstractEthContractCoin implements ICoin {
         } catch (IOException e) {
             log.info("IOException", e);
         }
-        return new InputData();
+        return Optional.empty();
     }
 
-    public InputData deserizeTransaction(Transaction transaction) {
+    public Optional<InputData> deserizeTransaction(Transaction transaction) {
         String from = transaction.getFrom();
         BigInteger blockNumber;
         if (transaction.getBlockNumberRaw() == null) {
@@ -97,14 +94,15 @@ public abstract class AbstractEthContractCoin implements ICoin {
         }
         String data = transaction.getInput();
         ContractInputData inputData = new ContractInputData();
-        deserizeInput(data, inputData);
+        if (!deserizeInput(data, inputData)) {
+            return Optional.empty();
+        }
         inputData.setFrom(from);
         inputData.setBlockNumber(blockNumber);
-        inputData.setSuccess(isSuccess(transaction.getHash()));
         inputData.setTxid(transaction.getHash());
         inputData.setGasPrice(Convert.fromWei(new BigDecimal(transaction.getGasPrice()), Convert.Unit.GWEI).toBigInteger());
         inputData.setGasUsed(transaction.getGas());
-        return inputData;
+        return Optional.of(inputData);
     }
 
 
@@ -126,47 +124,11 @@ public abstract class AbstractEthContractCoin implements ICoin {
         return BigInteger.ZERO;
     }
 
-//    public String transfer(String fromAddress, String toAddress, BigInteger value) {
-//        Address to = new Address(toAddress);
-//        Uint256 valueUint256 = new Uint256(value);
-//        Function function = new Function("transfer", Arrays.<Type>asList(to, valueUint256), Collections.<TypeReference<?>>emptyList());
-//        String dataHex = FunctionEncoder.encode(function);
-//        org.web3j.protocol.core.methods.request.Transaction transaction = org.web3j.protocol.core.methods.request.Transaction.createEthCallTransaction(fromAddress, contractAddress, dataHex);
-//        try {
-//            org.web3j.protocol.core.methods.response.EthSendTransaction ethSendTransaction = web3.ethSendTransaction(transaction).send();
-//            String txHash = ethSendTransaction.getTransactionHash();
-//            return txHash;
-//        } catch (IOException e) {
-//            log.error("IOException while transfer ugt ", e);
-//        }
-//
-//        return "";
-//    }
 
-    @Override
-    public TransactionReceipt transfer(String toAddress, BigInteger value) throws IOException, InterruptedException, TransactionTimeoutException {
-        Future<TransactionReceipt> transactionReceiptFuture = token.transfer(new Address(toAddress), new Uint256(value));
-        try {
-            return transactionReceiptFuture.get();
-        } catch (ExecutionException e) {
-            log.error("", e);
-            throw new IOException("ExecutionException ", e);
-        }
+    public LocalTransaction buildTx(String toAddress, BigInteger value) throws IOException {
+        Address to = new Address(toAddress);
+        Uint256 valueUint256 = new Uint256(value);
+        Function function = new Function("transfer", Arrays.<Type>asList(to, valueUint256), Collections.<TypeReference<?>>emptyList());
+        return new LocalTransaction(this, gethConfig.getWithdrawGasPrice(), gethConfig.getWithdrawGasLimit(), this.getFromAddress(), contractAddress, FunctionEncoder.encode(function), BigInteger.ZERO);
     }
-
-    protected boolean isSuccess(String txid) {
-        Request<?, EthGetTransactionReceipt> receiptRequest = web3.ethGetTransactionReceipt(txid);
-        try {
-            EthGetTransactionReceipt receipt = receiptRequest.send();
-            Optional<TransactionReceipt> optional = receipt.getTransactionReceipt();
-            if (optional.isPresent()) {
-                List<Token.TransferEventResponse> responses = token.getTransferEvents(optional.get());
-                return responses.size() > 0;
-            }
-        } catch (IOException e) {
-            log.info("IOExcetion", e);
-        }
-        return false;
-    }
-
 }

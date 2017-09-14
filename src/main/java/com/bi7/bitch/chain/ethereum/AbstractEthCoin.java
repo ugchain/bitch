@@ -6,8 +6,11 @@ import com.bi7.bitch.chain.ICoin;
 import com.bi7.bitch.chain.InputData;
 import com.bi7.bitch.chain.ethereum.contract.ContractInputData;
 import com.bi7.bitch.conf.GethConfig;
+import com.bi7.web3j.tx.AsyncTransfer;
+import com.bi7.web3j.tx.LocalTransaction;
 import org.apache.commons.logging.Log;
 import org.web3j.crypto.Credentials;
+import org.web3j.crypto.Hash;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameter;
 import org.web3j.protocol.core.DefaultBlockParameterName;
@@ -31,22 +34,21 @@ import java.util.Optional;
 /**
  * Created by foxer on 2017/8/28.
  */
-public abstract class AbstractEthCoin extends Transfer implements ICoin {
+public abstract class AbstractEthCoin extends AsyncTransfer implements ICoin {
     private final static Log log = Logs.getLogger(AbstractEthCoin.class);
     protected GethConfig gethConfig = SpringBeanFactoryUtils.getBean(GethConfig.class);
     protected Web3j web3;
 
     public AbstractEthCoin(Web3j web3, Credentials credentials, byte chainId) {
-        super(web3, new RawTransactionManager(web3, credentials, chainId));
+        super(web3, credentials, chainId);
         this.web3 = web3;
     }
 
-    @Override
-    public TransactionReceipt transfer(String toAddress, BigInteger value) throws IOException, InterruptedException, TransactionTimeoutException {
-        return this.send(toAddress, "", value, gethConfig.getWithdrawGasPrice(), gethConfig.getWithdrawGasLimit());
+    public LocalTransaction buildTx(String toAddress, BigInteger value) throws IOException {
+        return new LocalTransaction(this, gethConfig.getWithdrawGasPrice(), gethConfig.getWithdrawGasLimit(), this.getFromAddress(), toAddress, "", value);
     }
 
-    public InputData getTransactionById(String transactionHash) {
+    public Optional<InputData> getTransactionById(String transactionHash) {
         Request<?, EthTransaction> ethTransactionRequest = web3.ethGetTransactionByHash(transactionHash);
         try {
             EthTransaction ethTransaction = ethTransactionRequest.send();
@@ -58,11 +60,10 @@ public abstract class AbstractEthCoin extends Transfer implements ICoin {
         } catch (IOException e) {
             log.info("IOException", e);
         }
-        return new InputData();
+        return Optional.empty();
     }
 
     public BigInteger getBalance(String address) {
-
         Request<?, EthGetBalance> ethGetBalanceRequest = web3.ethGetBalance(address, DefaultBlockParameterName.LATEST);
         try {
             EthGetBalance ethGetBalance = ethGetBalanceRequest.send();
@@ -72,25 +73,20 @@ public abstract class AbstractEthCoin extends Transfer implements ICoin {
         }
     }
 
-    public InputData deserizeTransaction(Transaction transaction) {
+    public Optional<InputData> deserizeTransaction(Transaction transaction) {
         EthereumInputData inputData = new EthereumInputData();
         inputData.setFrom(transaction.getFrom());
         inputData.setTo(transaction.getTo());
         inputData.setValue(transaction.getValue());
-        System.out.println(transaction.getBlockNumberRaw());
         if (transaction.getBlockNumberRaw() != null) {
             inputData.setBlockNumber(transaction.getBlockNumber());
         } else {
-            inputData.setBlockNumber(BigInteger.ZERO);
+            return Optional.empty();
         }
-        inputData.setSuccess(isSuccess(transaction.getHash()));
         inputData.setTxid(transaction.getHash());
         inputData.setGasPrice(Convert.fromWei(new BigDecimal(transaction.getGasPrice()), Convert.Unit.GWEI).toBigInteger());
         inputData.setGasUsed(transaction.getGas());
-        return inputData;
+        return Optional.of(inputData);
     }
 
-    protected boolean isSuccess(String txid) {
-        return true;
-    }
 }

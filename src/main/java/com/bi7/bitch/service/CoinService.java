@@ -1,10 +1,10 @@
 package com.bi7.bitch.service;
 
 import com.bi7.bitch.Logs;
+import com.bi7.bitch.chain.InputData;
 import com.bi7.bitch.chain.ethereum.ContractAddress;
 import com.bi7.bitch.chain.ethereum.EthereumInputData;
 import com.bi7.bitch.chain.ethereum.contract.AbstractEthContractCoin;
-import com.bi7.bitch.chain.ethereum.contract.ContractInputData;
 import com.bi7.bitch.conf.AppConfig;
 import com.bi7.bitch.conf.CoinName;
 import com.bi7.bitch.dao.CoinDao;
@@ -12,19 +12,20 @@ import com.bi7.bitch.dao.model.*;
 import com.bi7.bitch.response.Msg;
 import com.bi7.bitch.response.Status;
 import com.bi7.bitch.util.DecimalsUtil;
+import com.bi7.web3j.tx.LocalTransaction;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.web3j.protocol.core.methods.response.Transaction;
-import org.web3j.utils.Convert;
+import org.web3j.protocol.Web3j;
+import org.web3j.protocol.core.methods.response.EthGetTransactionReceipt;
+import org.web3j.protocol.core.methods.response.TransactionReceipt;
 
-import java.math.BigDecimal;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
 
 
 /**
@@ -44,7 +45,7 @@ public class CoinService {
     private DecimalsUtil decimalsUtil;
 
     @Autowired
-    private Web3jService web3;
+    private Web3j web3;
 
     private final static int SAFETY_ETH_BLOCKNUMBER = 10;
 
@@ -70,49 +71,53 @@ public class CoinService {
             log.error("", e);
             return Msg.ERROR;
         }
-/*
-        udpate bitch_coin
-        update myzc
-         */
-//        BigInteger val = decimalsUtil.decode(value, coinname.getDecimals());
         BigInteger feeExact = decimalsUtil.decode(fee, coinname.getDecimals());
-        EthereumInputData idata = null;
-        //TODO ERROR : 先创建 tx ，插入成功后，再send
+
+        LocalTransaction localTx = null;
 
         try {
-            idata = web3.sendTransaction(address, coinname, val);
-        } catch (Exception e) {
+            localTx = coinname.getCoin().buildTx(address, val);
+        } catch (IOException e) {
             e.printStackTrace();
             log.error("", e);
             return Msg.ERROR;
         }
-        /*
-        create tx
-        send tx to p2p
-         */
 
         BitchCoin bitchCoin = new BitchCoin();
         bitchCoin.setRid(zcId);
         bitchCoin.setUserid(userid);
         bitchCoin.setCoinname(coinname.getCoinName());
         bitchCoin.setType(CoinTypeEnum.WITHDRAW.getId());
-        bitchCoin.setFrom(idata.getFrom());
+        bitchCoin.setFrom(localTx.getFrom());
         bitchCoin.setTo(address);
         bitchCoin.setValue(val.toString());
         bitchCoin.setFee(feeExact.toString());
         bitchCoin.setBlockNumber(0);
-        bitchCoin.setGasUsed(idata.getGasUsed().intValue());
-        bitchCoin.setGasPrice(idata.getGasPrice().intValue());
+//        bitchCoin.setGasUsed(idata.getGasUsed().intValue());
+        bitchCoin.setGasPrice(localTx.getGasPriceGWei());
         bitchCoin.setStatus(WithdrawStatusEnum.PENDING.getId());
-        bitchCoin.setTxid(idata.getTxid());
+        try {
+            bitchCoin.setTxid(localTx.getTxId());
+        } catch (IOException e) {
+            e.printStackTrace();
+            log.error("", e);
+            return Msg.ERROR;
+        }
         Date date = new Date();
         bitchCoin.setAddtime(date);
         bitchCoin.setUpdatetime(date);
 
-
         try {
             coinDao.saveWithdraw(bitchCoin);
         } catch (Exception e) {
+            log.error("", e);
+            return Msg.ERROR;
+        }
+
+        try {
+            localTx.send();
+        } catch (IOException e) {
+            e.printStackTrace();
             log.error("", e);
             return Msg.ERROR;
         }
@@ -134,7 +139,6 @@ public class CoinService {
         bitchCoin.setTo(idata.getTo());
         bitchCoin.setValue(idata.getValue().toString());
         bitchCoin.setFee("0");
-        //TODO 类型强转
         bitchCoin.setBlockNumber(idata.getBlockNumber().intValue());
         bitchCoin.setTxid(idata.getTxid());
         bitchCoin.setGasPrice(idata.getGasPrice().intValue());
@@ -149,37 +153,28 @@ public class CoinService {
     /*
     扫描充值表，并且根据区块状态修改数据库状态
      */
-    public void scanChargeCoin(Function<String, Optional<Transaction>> func) {
+    public void scanChargeCoin() {
         List<BitchCoin> bitchCoins = coinDao.findAll(CoinTypeEnum.CHARGE, ChargeStatusEnum.PENDING.getId());
         bitchCoins.forEach(bitchCoin -> {
 
-            Optional<Transaction> optTrans = func.apply(bitchCoin.getTxid());
+            Optional<TransactionReceipt> optTrans = getTransactionReceipt(bitchCoin.getTxid());
             if (!optTrans.isPresent()) {
                 //交易消失，设置为 失败
                 coinDao.chargeFailure(bitchCoin.getRid(), ChargeStatusEnum.FAILURE.getId());
                 return;
             }
-            Transaction tx = optTrans.get();
+            //TODO WARNING 获取TransactionReceipt几乎没有意义，充值表入库的时候已经有 真实 gas消耗数据了
+            TransactionReceipt tx = optTrans.get();
 
-            /*
-            if idata == null
-                update status to failure
-            if blockNumber > bitchCoin.blockNumber + 10
-                update status to success
-             */
-
-            //正常情况下不可能发生，若监听区块的程序正常，那么处于pendding 状态的tx 是不会进入数据库中的
-            if (tx.getBlockNumberRaw() == null) {
-                return;
-            }
             if (bitchCoin.getBlockNumber() != tx.getBlockNumber().intValue()) {
                 Logs.scheduledLogger.error(String.format("blockNumber error,bitchCoin.getBlockNumber: %d, tx.getBlockNumber: %d, txid: %s",
                         bitchCoin.getBlockNumber(), tx.getBlockNumber().intValue(), bitchCoin.getTxid()));
                 return;
             }
             if (this.currentBlockNumber > bitchCoin.getBlockNumber() + SAFETY_ETH_BLOCKNUMBER) {
-                EthereumInputData idata = null;
+                Optional<InputData> optEid = null;
                 CoinName coinName = CoinName.get(bitchCoin.getCoinname());
+                //double check
                 if (ContractAddress.isExistContractAddress(tx.getTo())) {
                     //eth contract token
                     AbstractEthContractCoin coin = ContractAddress.findCoinInstance(tx.getTo());
@@ -187,19 +182,19 @@ public class CoinService {
                         Logs.scheduledLogger.error(String.format("coinname error,txid: %s", bitchCoin.getTxid()));
                         return;
                     }
-                    idata = (EthereumInputData) coin.deserizeTransaction(tx);
+                    optEid = coin.getTransactionById(tx.getTransactionHash());
                 } else {
-                    idata = new EthereumInputData();
-                    //eth transaction
-//                    idata.setTxid(tx.getHash());
-//                    idata.setGasPrice(Convert.fromWei(new BigDecimal(tx.getGasPrice()), Convert.Unit.GWEI).toBigInteger());
-//                    idata.setGasUsed(tx.getGas());
-//                    idata.setBlockNumber(tx.getBlockNumber());
-//                    idata.setFrom(tx.getFrom());
-//                    idata.setTo(tx.getTo());
-                    idata.setValue(tx.getValue());
+                    optEid = coinName.getCoin().getTransactionById(tx.getTransactionHash());
                 }
+                if (!optEid.isPresent()) {
+                    Logs.scheduledLogger.debug("getTransactionById return nothing");
+                    return;
+                }
+                EthereumInputData idata = (EthereumInputData) optEid.get();
+                //repair gasUsed,set real gasUsed
+                idata.setGasUsed(tx.getGasUsed());
 
+                //for bq_db
                 String val = decimalsUtil.encode(idata.getValue().toString(), coinName.getDecimals(), coinName.getLocalDecimals());
                 coinDao.chargeSuccess(bitchCoin.getUserid(), bitchCoin.getRid(), ChargeStatusEnum.SUCCESS.getId(), bitchCoin.getCoinname(), val);
             }
@@ -207,21 +202,36 @@ public class CoinService {
         });
     }
 
-    public void scanWithdrawCoin(Function<String, Optional<Transaction>> func) {
+    public void scanWithdrawCoin() {
         List<BitchCoin> bitchCoins = coinDao.findAll(CoinTypeEnum.WITHDRAW, ChargeStatusEnum.PENDING.getId());
         bitchCoins.forEach(bitchCoin -> {
-            Optional<Transaction> optTrans = func.apply(bitchCoin.getTxid());
+            Optional<TransactionReceipt> optTrans = getTransactionReceipt(bitchCoin.getTxid());
             if (!optTrans.isPresent()) {
-                coinDao.updateWithdrawStatus(bitchCoin.getRid(), 0, WithdrawStatusEnum.FAILURE.getId());
+                coinDao.updateWithdrawStatus(bitchCoin.getRid(), WithdrawStatusEnum.FAILURE, 0, 0);
                 return;
             }
-            Transaction tx = optTrans.get();
-            //TODO getBlockNumber 应该根据 Raw 判断是否为 null，否则会抛异常，由于pedding状态的 tx 没有 blockNumber 数据
-            if (tx.getBlockNumberRaw() != null) {
-                if (this.currentBlockNumber > tx.getBlockNumber().intValue() + SAFETY_ETH_BLOCKNUMBER) {
-                    coinDao.updateWithdrawStatus(bitchCoin.getRid(), tx.getBlockNumber().intValue(), WithdrawStatusEnum.SUCCESS.getId());
-                }
+            TransactionReceipt tx = optTrans.get();
+            if (this.currentBlockNumber > tx.getBlockNumber().intValue() + SAFETY_ETH_BLOCKNUMBER) {
+                coinDao.updateWithdrawStatus(bitchCoin.getRid(), WithdrawStatusEnum.SUCCESS, tx.getBlockNumber().intValue(), tx.getGasUsed().intValue());
             }
         });
     }
+
+    //for scheduledWork
+    //TODO WARNING 重复 在 ScheduledWork 里也有
+    private Optional<TransactionReceipt> getTransactionReceipt(String transactionHash) {
+        try {
+            EthGetTransactionReceipt transactionReceipt = this.web3.ethGetTransactionReceipt(transactionHash).send();
+            if (transactionReceipt.hasError()) {
+                Logs.scheduledLogger.error(transactionReceipt.getError().getMessage());
+                return Optional.empty();
+            } else {
+                return transactionReceipt.getTransactionReceipt();
+            }
+        } catch (IOException e) {
+            Logs.scheduledLogger.error("", e);
+            return Optional.empty();
+        }
+    }
+
 }

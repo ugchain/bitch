@@ -20,7 +20,6 @@ public class InputData {
         this.txid = txid;
     }
 
-    private boolean isSuccess;
 
     public String getFrom() {
         return from;
@@ -54,13 +53,6 @@ public class InputData {
         this.blockNumber = blockNumber;
     }
 
-    public boolean isSuccess() {
-        return isSuccess;
-    }
-
-    public void setSuccess(boolean success) {
-        isSuccess = success;
-    }
 
     public String toString() {
         return String.format("from : %s, to : %s, value : %s, blockNumber: %d , txid: %s", from, to, value, blockNumber, txid);

@@ -18,7 +18,8 @@ import java.util.function.Consumer;
 public final class ContractAddress {
     private final static Map<String, String> addressMap = new HashMap<String, String>() {
         {
-            put("ugt", "0x43eE79e379e7b78D871100ed696e803E7893b644");
+//            put("ugt", "0x43eE79e379e7b78D871100ed696e803E7893b644");
+            put("ugt", "0xb19e56471c4edcd9edb6fed0ca3583f5dfc09c62");
         }
     };
     private final static List<String> list = new ArrayList<>(addressMap.size());

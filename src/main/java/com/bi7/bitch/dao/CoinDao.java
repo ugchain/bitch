@@ -58,10 +58,10 @@ public class CoinDao {
     检测 txid & status ，监听到 符合条件的 （blocknumber 满足要求），那么更新 status
      */
     @Transactional(value = "bitchDataTransactionManager")
-    public synchronized void updateWithdrawStatus(int rid, int status, int blockNumber) {
+    public synchronized void updateWithdrawStatus(int rid, WithdrawStatusEnum status, int blockNumber, int gasUsed) {
 
         //即将要设置的
-        if ((status != WithdrawStatusEnum.SUCCESS.getId()) && (status != WithdrawStatusEnum.FAILURE.getId())) {
+        if ((status != WithdrawStatusEnum.SUCCESS) && (status != WithdrawStatusEnum.FAILURE)) {
             throw new RuntimeException();
         }
 
@@ -69,9 +69,9 @@ public class CoinDao {
         update bitch_coin
         update myzc
          */
-        coinMapper.updateBlockNumberAndStatus(rid, blockNumber, status, CoinTypeEnum.WITHDRAW.getId());
+        coinMapper.updateBlockNumberAndStatus(rid, blockNumber, status.getId(), gasUsed, CoinTypeEnum.WITHDRAW.getId());
         try {
-            myzcDao.updateStatus(rid, status);
+            myzcDao.updateStatus(rid, status.getId());
         } catch (Exception e) {
             throw new RuntimeException();
         }

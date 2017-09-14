@@ -40,7 +40,7 @@ public class GethConfig {
     private BigInteger withdrawGasPrice;
     private BigInteger withdrawGasLimit;
 
-    private byte chainId = ChainId.MAIN_NET;
+    private byte chainId = 4;
 
     public byte getChainId() {
         return chainId;

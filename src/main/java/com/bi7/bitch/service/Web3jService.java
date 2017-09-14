@@ -1,7 +1,6 @@
 package com.bi7.bitch.service;
 
 import com.bi7.bitch.Logs;
-import com.bi7.bitch.chain.ethereum.EthereumInputData;
 import com.bi7.bitch.conf.AppConfig;
 import com.bi7.bitch.conf.CoinName;
 import com.bi7.bitch.conf.GethConfig;
@@ -13,11 +12,9 @@ import org.web3j.crypto.Credentials;
 import org.web3j.crypto.Hash;
 import org.web3j.crypto.WalletUtils;
 import org.web3j.protocol.Web3j;
-import org.web3j.protocol.core.methods.response.TransactionReceipt;
 
 import java.io.File;
 import java.io.IOException;
-import java.math.BigInteger;
 import java.nio.file.Files;
 import java.util.Date;
 
@@ -76,18 +73,18 @@ public class Web3jService {
         return bitchWallet;
     }
 
-    public EthereumInputData sendTransaction(String to, CoinName coinName, BigInteger value) throws Exception {
-        TransactionReceipt ret = coinName.getCoin().transfer(to, value);
-        EthereumInputData idata = new EthereumInputData();
-        idata.setFrom(ret.getFrom());
-        idata.setTo(to);
-        idata.setBlockNumber(ret.getBlockNumber());
-        idata.setTxid(ret.getTransactionHash());
-        idata.setValue(value);
-        idata.setGasUsed(ret.getGasUsed());
-        idata.setGasPrice(gethConfig.getWithdrawGasPrice());
-        return idata;
-    }
+//    public EthereumInputData sendTransaction(String to, CoinName coinName, BigInteger value) throws Exception {
+//        TransactionReceipt ret = coinName.getCoin().transfer(to, value);
+//        EthereumInputData idata = new EthereumInputData();
+//        idata.setFrom(ret.getFrom());
+//        idata.setTo(to);
+//        idata.setBlockNumber(ret.getBlockNumber());//unknown
+//        idata.setTxid(ret.getTransactionHash());
+//        idata.setValue(value);
+//        idata.setGasUsed(ret.getGasUsed());
+//        idata.setGasPrice(gethConfig.getWithdrawGasPrice());
+//        return idata;
+//    }
 
     private String getFileContent(File file) throws Exception {
         try {
