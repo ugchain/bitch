@@ -75,7 +75,7 @@ public class ScheduledWork {
     scan bitch_coin
     update blockNumer and status  where txid
      */
-    @Scheduled(fixedRate = 100000)
+    @Scheduled(fixedRate = 5000)
     public void updateStatus() {
 
         try {
@@ -98,7 +98,7 @@ public class ScheduledWork {
     scan bitch_wallet
     insert
      */
-    @Scheduled(fixedRate = 100000)
+    @Scheduled(fixedRate = 5000)
     public void charge() {
         Request<?, EthBlockNumber> ethBlockNumberRequest = web3.ethBlockNumber();
         int blockNumber = 0;
@@ -117,7 +117,6 @@ public class ScheduledWork {
         int currentBlocknumber = Math.max(gethConfig.getStartBlockNumber() - 12, 1);
         try {
             while (blockNumber > currentBlocknumber) {
-
                 scanBlock(BigInteger.valueOf(currentBlocknumber), transaction -> {
                     //是内部合约
                     if (ContractAddress.isExistContractAddress(transaction.getTo())) {
@@ -193,6 +192,8 @@ public class ScheduledWork {
             if (bitchWallet == null) {
                 return;
             }
+
+            System.out.println(String.format("ethCharge: userid: %d ; address: %s",bitchWallet.getUserid(),bitchWallet.getAddress()));
 
             //为了真实的 gasUsed
             Optional<TransactionReceipt> transactionTreceiptOpt = getTransactionReceipt(transaction.getHash());

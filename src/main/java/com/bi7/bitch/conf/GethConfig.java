@@ -75,10 +75,11 @@ public class GethConfig {
         System.out.println("START scan blockchain from block:" + startBlockNumber);
 
         //2017.08.26 afternoon
-        if (startBlockNumber < 4204540) {
-            System.out.println("SYSTEM exit , startBlockNumber < 4204540");
-            System.exit(1);
-        }
+        //TODO for DEBUG
+//        if (startBlockNumber < 4204540) {
+//            System.out.println("SYSTEM exit , startBlockNumber < 4204540");
+//            System.exit(1);
+//        }
 
     }
 

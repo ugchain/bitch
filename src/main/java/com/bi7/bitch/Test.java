@@ -77,15 +77,15 @@ public class Test {
 
     public void init() throws Exception {
         UGT token = (UGT) CoinName.UGT.getCoin();
-        BigInteger b = token.getBalance("0xb549dc36c1035b1d9e5e000602c3800df5a6930f");
+//        BigInteger b = token.getBalance("0xb549dc36c1035b1d9e5e000602c3800df5a6930f");
 //        InputData idata = token.getTransactionById("0xc72bd26962f71b0174714875ab7ae073c5bd9bea9a62897df253e3ab90f0aeb2");
 
         ETH eth = (ETH) CoinName.ETH.getCoin();
-        BigInteger b2 = eth.getBalance("0x2b8bd9aa8c1d4dc69edb24b9b1e7f4bf37f68674");
+//        BigInteger b2 = eth.getBalance("0x2b8bd9aa8c1d4dc69edb24b9b1e7f4bf37f68674");
 //        InputData idata2 = eth.getTransactionById("0xaad4949b326b195663b641b99084d8cb5b48d2afba24712ac84bf39c90b10597");
 
 
-        ETH2 eth2 = new ETH2(web3j, config.getCredentials(), config.getChainId());
+//        ETH2 eth2 = new ETH2(web3j, config.getCredentials(), config.getChainId());
 
 //        String rawTx = eth2.send(config.getWithdrawGasPrice(), config.getWithdrawGasLimit(), "0x2b8bd9aa8c1d4dc69edb24b9b1e7f4bf37f68674", "", decimalsUtil.decode("0.863", 18));
 
