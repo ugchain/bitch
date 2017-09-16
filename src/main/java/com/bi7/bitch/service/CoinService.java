@@ -207,8 +207,10 @@ public class CoinService {
         List<BitchCoin> bitchCoins = coinDao.findAll(CoinTypeEnum.WITHDRAW, ChargeStatusEnum.PENDING.getId());
         bitchCoins.forEach(bitchCoin -> {
             Optional<TransactionReceipt> optTrans = getTransactionReceipt(bitchCoin.getTxid());
-            if (!optTrans.isPresent() && isTxExpired(bitchCoin.getAddtime())) {
-                coinDao.updateWithdrawStatus(bitchCoin.getRid(), WithdrawStatusEnum.FAILURE, 0, 0);
+            if (!optTrans.isPresent()) {
+                if (isTxExpired(bitchCoin.getAddtime())) {
+                    coinDao.updateWithdrawStatus(bitchCoin.getRid(), WithdrawStatusEnum.FAILURE, 0, 0);
+                }
                 return;
             }
             TransactionReceipt tx = optTrans.get();
