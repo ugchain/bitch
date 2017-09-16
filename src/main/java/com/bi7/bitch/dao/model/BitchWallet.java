@@ -71,4 +71,17 @@ public class BitchWallet {
     public void setAddtime(Date addtime) {
         this.addtime = addtime;
     }
+
+    @Override
+    public String toString() {
+        return "BitchWallet{" +
+                "userid=" + userid +
+                ", coinname='" + coinname + '\'' +
+                ", address='" + address + '\'' +
+                ", sha3='" + sha3 + '\'' +
+                ", addtime=" + addtime +
+                ", keystore='" + keystore + '\'' +
+                ", filename='" + filename + '\'' +
+                '}';
+    }
 }

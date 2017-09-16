@@ -49,6 +49,8 @@ public class CoinService {
 
     private final static int SAFETY_ETH_BLOCKNUMBER = 10;
 
+    private final static long TX_EXPIRED_TIME = 60 * 60 * 1000;// 1 hour
+
     //最新块高
     private int currentBlockNumber;
 
@@ -150,9 +152,7 @@ public class CoinService {
     }
 
 
-    /*
-    扫描充值表，并且根据区块状态修改数据库状态
-     */
+    //数据库中存在的，链上肯定存在，否则立即设为 FAILURE
     public void scanChargeCoin() {
         List<BitchCoin> bitchCoins = coinDao.findAll(CoinTypeEnum.CHARGE, ChargeStatusEnum.PENDING.getId());
         bitchCoins.forEach(bitchCoin -> {
@@ -202,11 +202,12 @@ public class CoinService {
         });
     }
 
+    //数据库存在的，可能 并未上链，所以，不能 仓促 设为FAILURE，
     public void scanWithdrawCoin() {
         List<BitchCoin> bitchCoins = coinDao.findAll(CoinTypeEnum.WITHDRAW, ChargeStatusEnum.PENDING.getId());
         bitchCoins.forEach(bitchCoin -> {
             Optional<TransactionReceipt> optTrans = getTransactionReceipt(bitchCoin.getTxid());
-            if (!optTrans.isPresent()) {
+            if (!optTrans.isPresent() && isTxExpired(bitchCoin.getAddtime())) {
                 coinDao.updateWithdrawStatus(bitchCoin.getRid(), WithdrawStatusEnum.FAILURE, 0, 0);
                 return;
             }
@@ -215,6 +216,11 @@ public class CoinService {
                 coinDao.updateWithdrawStatus(bitchCoin.getRid(), WithdrawStatusEnum.SUCCESS, tx.getBlockNumber().intValue(), tx.getGasUsed().intValue());
             }
         });
+    }
+
+    private boolean isTxExpired(Date addTime) {
+        Date now = new Date();
+        return (now.getTime() - addTime.getTime()) > TX_EXPIRED_TIME;
     }
 
     //for scheduledWork

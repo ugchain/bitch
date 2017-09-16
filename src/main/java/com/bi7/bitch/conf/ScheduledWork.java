@@ -59,9 +59,11 @@ public class ScheduledWork {
             EthBlockNumber ethBlockNumber = ethBlockNumberRequest.send();
             blockNumber = ethBlockNumber.getBlockNumber().intValue();
         } catch (IOException e) {
+            e.printStackTrace();
             Logs.scheduledLogger.error("ethBlockNumberRequest error ", e);
             return;
         } catch (Exception e) {
+            e.printStackTrace();
             Logs.scheduledLogger.error("", e);
             return;
         }
@@ -75,17 +77,6 @@ public class ScheduledWork {
      */
     @Scheduled(fixedRate = 100000)
     public void updateStatus() {
-//        Function<String, Optional<TransactionReceipt>> func = txid -> {
-//            try {
-//                return getTransactionReceipt(txid);
-//            } catch (IOException e) {
-//                Logs.scheduledLogger.error("", e);
-//                return Optional.empty();
-//            } catch (Exception e) {
-//                Logs.scheduledLogger.error("", e);
-//                return Optional.empty();
-//            }
-//        };
 
         try {
             coinService.scanChargeCoin();
@@ -123,7 +114,7 @@ public class ScheduledWork {
         }
         //每次回退12个块开始扫描
         //导致大量重复
-        int currentBlocknumber = gethConfig.getStartBlockNumber() - 12;
+        int currentBlocknumber = Math.max(gethConfig.getStartBlockNumber() - 12, 1);
         try {
             while (blockNumber > currentBlocknumber) {
 

@@ -19,7 +19,7 @@ public interface CoinMapper {
     @Update(value = "update bitch_coin c set c.blockNumber = #{blockNumber},c.status = #{status},c.gasUsed = #{gasUsed} where c.rid = #{rid} and c.type=#{type}")
     void updateBlockNumberAndStatus(@Param(value = "rid") int rid, @Param(value = "blockNumber") int blockNumber, @Param(value = "status") int status, @Param(value = "gasUsed") int gasUsed, @Param(value = "type") int type);
 
-    @Update(value = "update bitch_coin c set c.status = #{#status} where c.rid = #{rid} and c.type = #{type}")
+    @Update(value = "update bitch_coin c set c.status = #{status} where c.rid = #{rid} and c.type = #{type}")
     void updateStatus(@Param(value = "rid") int rid, @Param(value = "status") int status, @Param(value = "type") int type);
 
     @Select(value = "select * from bitch_coin where txid = #{txid}")
