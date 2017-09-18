@@ -127,10 +127,10 @@ public class CoinService {
     }
 
     //for scheduled work
-    public void saveCharge(BitchWallet bitchWallet, EthereumInputData idata, CoinName coinName) {
+    public synchronized boolean saveCharge(BitchWallet bitchWallet, EthereumInputData idata, CoinName coinName) {
 
         if (coinDao.exist(idata.getTxid())) {
-            return;
+            return false;
         }
         BitchCoin bitchCoin = new BitchCoin();
 
@@ -149,6 +149,7 @@ public class CoinService {
         bitchCoin.setAddtime(new Date());
 
         coinDao.saveCharge(bitchCoin, coinName);
+        return true;
     }
 
 

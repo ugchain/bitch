@@ -61,4 +61,18 @@ public class LocalTransaction {
     public int getGasPriceGWei() {
         return Convert.fromWei(new BigDecimal(this.getGasPrice()), Convert.Unit.GWEI).intValue();
     }
+
+    @Override
+    public String toString() {
+        return "LocalTransaction{" +
+                "gasPrice=" + gasPrice +
+                ", gasLimit=" + gasLimit +
+                ", from='" + from + '\'' +
+                ", to='" + to + '\'' +
+                ", data='" + data + '\'' +
+                ", value=" + value +
+                ", coin=" + coin +
+                ", rawTx='" + rawTx + '\'' +
+                '}';
+    }
 }

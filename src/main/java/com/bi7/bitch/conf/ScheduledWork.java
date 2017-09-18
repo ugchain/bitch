@@ -177,8 +177,9 @@ public class ScheduledWork {
                     return;
                 }
                 idata.setGasUsed(transactionTreceiptOpt.get().getGasUsed());
-                coinService.saveCharge(bitchWallet, idata, coin.getCoinName());
-                Logs.scheduledLogger.info(String.format("%s charge: %s", coin.toString(), idata.toString()));
+                if(coinService.saveCharge(bitchWallet, idata, coin.getCoinName())){
+                    Logs.scheduledLogger.info(String.format("%s charge: %s", coin.toString(), idata.toString()));
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -212,8 +213,9 @@ public class ScheduledWork {
             idata.setTo(transaction.getTo());
             idata.setValue(transaction.getValue());
 
-            coinService.saveCharge(bitchWallet, idata, CoinName.ETH);
-            Logs.scheduledLogger.info(String.format("ETH charge: %s", idata.toString()));
+            if(coinService.saveCharge(bitchWallet, idata, CoinName.ETH)){
+                Logs.scheduledLogger.info(String.format("ETH charge: %s", idata.toString()));
+            }
         } catch (Exception e) {
             e.printStackTrace();
             Logs.scheduledLogger.error("", e);
