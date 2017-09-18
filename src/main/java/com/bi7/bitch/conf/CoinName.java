@@ -3,7 +3,7 @@ package com.bi7.bitch.conf;
 import com.bi7.bitch.SpringBeanFactoryUtils;
 import com.bi7.bitch.chain.ICoin;
 import com.bi7.bitch.chain.ethereum.ETH;
-import com.bi7.bitch.chain.ethereum.contract.impl.UGT;
+import com.bi7.bitch.chain.ethereum.contract.impl.*;
 import com.bi7.bitch.util.DecimalsUtil;
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.WalletUtils;
@@ -20,17 +20,49 @@ public enum CoinName {
     UGT("ugt", "eths", 50000, 18, 4, new UGT(
             SpringBeanFactoryUtils.getBean(Web3j.class),
             SpringBeanFactoryUtils.getBean(GethConfig.class).getCredentials(),
-            SpringBeanFactoryUtils.getBean(GethConfig.class).getChainId())),
+            SpringBeanFactoryUtils.getBean(GethConfig.class).getChainId()
+    )),
+    OMG("omg", "eths", 10000, 18, 4, new OMG(
+            SpringBeanFactoryUtils.getBean(Web3j.class),
+            SpringBeanFactoryUtils.getBean(GethConfig.class).getCredentials(),
+            SpringBeanFactoryUtils.getBean(GethConfig.class).getChainId()
+    )),
+    EOS("eos", "eths", 10000, 18, 4, new EOS(
+            SpringBeanFactoryUtils.getBean(Web3j.class),
+            SpringBeanFactoryUtils.getBean(GethConfig.class).getCredentials(),
+            SpringBeanFactoryUtils.getBean(GethConfig.class).getChainId()
+    )),
+    QUTM("qutm", "eths", 10000, 18, 4, new QUTM(
+            SpringBeanFactoryUtils.getBean(Web3j.class),
+            SpringBeanFactoryUtils.getBean(GethConfig.class).getCredentials(),
+            SpringBeanFactoryUtils.getBean(GethConfig.class).getChainId()
+    )),
+    SNT("snt", "eths", 50000, 18, 4, new QUTM(
+            SpringBeanFactoryUtils.getBean(Web3j.class),
+            SpringBeanFactoryUtils.getBean(GethConfig.class).getCredentials(),
+            SpringBeanFactoryUtils.getBean(GethConfig.class).getChainId()
+    )),
+    PAY("pay", "eths", 50000, 18, 4, new PAY(
+            SpringBeanFactoryUtils.getBean(Web3j.class),
+            SpringBeanFactoryUtils.getBean(GethConfig.class).getCredentials(),
+            SpringBeanFactoryUtils.getBean(GethConfig.class).getChainId()
+    )),
     ETH("eth", "eths", 1000, 18, 6, new ETH(
             SpringBeanFactoryUtils.getBean(Web3j.class),
             SpringBeanFactoryUtils.getBean(GethConfig.class).getCredentials(),
-            SpringBeanFactoryUtils.getBean(GethConfig.class).getChainId()));
+            SpringBeanFactoryUtils.getBean(GethConfig.class).getChainId()
+    ));
 
     private static Map<String, CoinName> map = new HashMap<>();
 
     static {
         map.put(CoinName.ETH.coinname, CoinName.ETH);
         map.put(CoinName.UGT.coinname, CoinName.UGT);
+        map.put(CoinName.OMG.coinname, CoinName.OMG);
+        map.put(CoinName.EOS.coinname, CoinName.EOS);
+        map.put(CoinName.QUTM.coinname, CoinName.QUTM);
+        map.put(CoinName.SNT.coinname, CoinName.SNT);
+        map.put(CoinName.PAY.coinname, CoinName.PAY);
     }
 
 
