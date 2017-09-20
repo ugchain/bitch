@@ -13,6 +13,5 @@ public class BitchApplication {
     public static void main(String[] args) throws Exception {
         ApplicationContext context = SpringApplication.run(BitchApplication.class, args);
         context.getBean(GethConfig.class).init();
-        context.getBean(Test.class).init();
     }
 }
