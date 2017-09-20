@@ -64,7 +64,6 @@ public abstract class AbstractEthContractCoin extends AsyncTransfer implements I
             inputData.setValue(valueBigInteger);
             return true;
         } else {
-            log.info("not transfer tx");
             return false;
         }
     }
