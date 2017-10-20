@@ -22,8 +22,8 @@ public interface CoinMapper {
     @Update(value = "update bitch_coin c set c.status = #{status} where c.rid = #{rid} and c.type = #{type}")
     void updateStatus(@Param(value = "rid") int rid, @Param(value = "status") int status, @Param(value = "type") int type);
 
-    @Select(value = "select * from bitch_coin where txid = #{txid}")
-    BitchCoin findOne(@Param(value = "txid") String txid);
+    @Select(value = "select * from bitch_coin where txid = #{txid} and `type` = #{type}")
+    BitchCoin findOne(@Param(value = "txid") String txid, @Param(value = "type") int type);
 
     @Select(value = "select * from bitch_coin where status = #{status} and type=#{type}")
     List<BitchCoin> findAll(@Param(value = "type") int type, @Param(value = "status") int status);

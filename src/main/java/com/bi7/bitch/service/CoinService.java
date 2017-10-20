@@ -129,7 +129,7 @@ public class CoinService {
     //for scheduled work
     public synchronized boolean saveCharge(BitchWallet bitchWallet, EthereumInputData idata, CoinName coinName) {
 
-        if (coinDao.exist(idata.getTxid())) {
+        if (coinDao.exist(idata.getTxid(), CoinTypeEnum.CHARGE.getId())) {
             return false;
         }
         BitchCoin bitchCoin = new BitchCoin();

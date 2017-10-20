@@ -79,8 +79,8 @@ public class CoinDao {
 
 
     //for scheduled work
-    public boolean exist(String txid) {
-        BitchCoin bitchCoin = coinMapper.findOne(txid);
+    public boolean exist(String txid, int type) {
+        BitchCoin bitchCoin = coinMapper.findOne(txid, type);
         return bitchCoin != null;
     }
 
