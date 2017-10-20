@@ -1,5 +1,6 @@
 package com.bi7.web3j.tx;
 
+import org.bitcoinj.core.Transaction;
 import org.web3j.crypto.Hash;
 import org.web3j.utils.Convert;
 
@@ -19,7 +20,18 @@ public class LocalTransaction {
     private String data;
     private BigInteger value;
     private AsyncTransfer coin;
+    private AsyncTransferBtc coinBtc;
+    private Transaction btcTx;
+    private String btcTxId;
     private String rawTx;
+
+    public Transaction getBtcTx() {
+        return this.btcTx;
+    }
+
+    public void setBtcTx(Transaction btcTx) {
+        this.btcTx = btcTx;
+    }
 
     public String getFrom() {
         return from;
@@ -28,6 +40,16 @@ public class LocalTransaction {
     public String getTo() {
         return to;
     }
+
+    public LocalTransaction(AsyncTransferBtc coin, String to, BigInteger value, Transaction tx, String btcTxId,String rawTx) {
+        this.coinBtc = coin;
+        this.rawTx = rawTx;
+        this.to = to;
+        this.value = value;
+        this.btcTx = tx;
+        this.btcTxId = btcTxId;
+    }
+
 
     public LocalTransaction(AsyncTransfer coin, BigInteger gasPrice, BigInteger gasLimit, String from, String to, String data, BigInteger value) {
         this.gasLimit = gasLimit;
@@ -40,8 +62,16 @@ public class LocalTransaction {
 
     }
 
+    public String getRawTx() {
+        return this.rawTx;
+    }
+
     private void checkRawTx() throws IOException {
         rawTx = coin.buildRawTx(gasPrice, gasLimit, to, data, value);
+    }
+
+    public String getBtcTxId() {
+        return this.btcTxId;
     }
 
     public String getTxId() throws IOException {

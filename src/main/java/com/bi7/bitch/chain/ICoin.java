@@ -2,6 +2,7 @@ package com.bi7.bitch.chain;
 
 import com.bi7.bitch.conf.CoinName;
 import com.bi7.web3j.tx.LocalTransaction;
+import org.bitcoinj.core.InsufficientMoneyException;
 
 import java.io.IOException;
 import java.math.BigInteger;

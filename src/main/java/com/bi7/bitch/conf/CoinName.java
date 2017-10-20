@@ -2,13 +2,18 @@ package com.bi7.bitch.conf;
 
 import com.bi7.bitch.SpringBeanFactoryUtils;
 import com.bi7.bitch.chain.ICoin;
+import com.bi7.bitch.chain.btc.BTC;
 import com.bi7.bitch.chain.ethereum.ETH;
 import com.bi7.bitch.chain.ethereum.contract.impl.*;
 import com.bi7.bitch.util.DecimalsUtil;
+import org.bitcoinj.core.BlockChain;
+import org.bitcoinj.params.TestNet3Params;
+import org.bitcoinj.wallet.Wallet;
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.WalletUtils;
 import org.web3j.protocol.Web3j;
 
+import java.io.File;
 import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
@@ -51,6 +56,12 @@ public enum CoinName {
             SpringBeanFactoryUtils.getBean(Web3j.class),
             SpringBeanFactoryUtils.getBean(GethConfig.class).getCredentials(),
             SpringBeanFactoryUtils.getBean(GethConfig.class).getChainId()
+    )),
+    BTC("btc", "btcs", 1000, 18, 6, new BTC(
+            SpringBeanFactoryUtils.getBean(BTCConfig.class).getChainFilePath(),
+            SpringBeanFactoryUtils.getBean(BTCConfig.class).getWalletFilePath(),
+            TestNet3Params.get()
+
     ));
 
     private static Map<String, CoinName> map = new HashMap<>();
