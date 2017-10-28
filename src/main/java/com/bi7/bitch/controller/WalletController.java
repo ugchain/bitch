@@ -62,10 +62,10 @@ public class WalletController {
     public String applyNewAddress(@RequestParam("userid") int userId, @RequestParam("coinname") String coinname,
                                   @RequestParam(value = "sign",required = false) String sign) {
 
-//        if (sign == null || "".equals(sign)) {
-//            log.warn("sign null or empty");
-//            return Msg.PARAM_ERROR.toString();
-//        }
+        if (sign == null || "".equals(sign)) {
+            log.warn("sign null or empty");
+            return Msg.PARAM_ERROR.toString();
+        }
         if (userId <= 0) {
             log.warn("userid <= 0 ");
             return Msg.PARAM_ERROR.toString();
@@ -77,16 +77,16 @@ public class WalletController {
             return Msg.PARAM_ERROR.toString();
         }
 
-//        boolean checkResult = signUtil.checkSign(sign, new HashMap<String, Object>() {
-//            {
-//                put("userid", userId);
-//                put("coinname", coinname);
-//            }
-//        });
-//        if (!checkResult) {
-//            log.warn(String.format("signCheck error,userid: %d, coinname: %s, sign: %s", userId, coinname, sign));
-//            return Msg.PARAM_ERROR.toString();
-//        }
+        boolean checkResult = signUtil.checkSign(sign, new HashMap<String, Object>() {
+            {
+                put("userid", userId);
+                put("coinname", coinname);
+            }
+        });
+        if (!checkResult) {
+            log.warn(String.format("signCheck error,userid: %d, coinname: %s, sign: %s", userId, coinname, sign));
+            return Msg.PARAM_ERROR.toString();
+        }
         return service.applyNewAddress(userId, cn).toString();
     }
 
