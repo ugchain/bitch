@@ -161,7 +161,7 @@ public class GethConfig {
             e.printStackTrace();
             System.exit(1);
         }
-        this.keystorePassPhrase = ret;
+        this.keystorePassPhrase = ret.trim();
     }
 
     public void saveLastedBlockNumber(int blockNumber) {
