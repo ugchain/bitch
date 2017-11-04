@@ -55,7 +55,7 @@ public abstract class AbstractEthContractCoin extends AsyncTransfer implements I
     }
 
     protected boolean deserizeInput(String data, InputData inputData) {
-        if (data.substring(0, 10).equals("0xa9059cbb")) {
+        if (data != null && data.length() > 10 && data.substring(0, 10).equals("0xa9059cbb")) {
             String to = data.substring(34, 74);
             String hexTo = Numeric.prependHexPrefix(to);
             String value = data.substring(74);
