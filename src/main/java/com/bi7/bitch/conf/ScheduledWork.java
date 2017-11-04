@@ -8,6 +8,7 @@ import com.bi7.bitch.chain.ethereum.contract.AbstractEthContractCoin;
 import com.bi7.bitch.chain.ethereum.contract.ContractInputData;
 import com.bi7.bitch.dao.model.BitchWallet;
 import com.bi7.bitch.service.CoinService;
+import com.bi7.bitch.service.TxService;
 import com.bi7.bitch.service.WalletService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
@@ -23,6 +24,7 @@ import org.web3j.utils.Convert;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
@@ -50,7 +52,35 @@ public class ScheduledWork {
 
     @Autowired
     private CoinService coinService;
-
+    
+    @Autowired
+    private TxService txService;
+    
+    
+    /**
+     * 定时扫描bitch-tx表，查看blockNumber=0(未打包的)的tx，进行处理
+     */
+    @Scheduled(fixedRate = 5000)
+    public void scanTableToUpdate() {
+    	txService.scanTableToUpdate();
+    }
+    
+    /**
+     * 定时扫描bitch-wallet表，没有eth币的账户打币
+     */
+    @Scheduled(fixedRate = 5000)
+    public void scanTableToAddEth() {
+    	txService.scanTableToAddEth();
+    }
+    
+    /**
+     * 按照任意时段，扫面tx表，汇总所有的手续费
+     */
+    @Scheduled(fixedRate = 5000)
+    public void scanBitchTx() {
+    	txService.statisFees();
+    }
+    
     @Scheduled(fixedRate = 5000)
     public void updateCurrentBlockNumber() {
         Request<?, EthBlockNumber> ethBlockNumberRequest = web3.ethBlockNumber();

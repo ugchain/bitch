@@ -28,4 +28,11 @@ public interface TxMapper {
 
     @Select(value = "update bitch_tx set blockNumber = #{blockNumber},fee = #{fee}, gasPrice  = #{gasPrice},gasUsed= #{gasUsed} where txid = #{txid}")
     void update(@Param(value = "txid") String txid,@Param(value = "blockNumber")int blockNumber,@Param(value = "fee")String fee,@Param(value = "gasPrice") int gasPrice,@Param(value="gasUsed")int gasUsed) throws Exception;
+    
+    @Select(value = "select * from bitch_tx where `from` = #{from}")
+    List<BitchTx> txInfoByAddress(@Param(value = "from") String from) throws Exception;
+    
+    @Select(value = "select * from bitch_tx")
+	List<BitchTx> selectBitchTx();
+
 }

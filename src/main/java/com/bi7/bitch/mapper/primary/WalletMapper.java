@@ -1,6 +1,9 @@
 package com.bi7.bitch.mapper.primary;
 
 import com.bi7.bitch.dao.model.BitchWallet;
+
+import java.util.List;
+
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -22,4 +25,14 @@ public interface WalletMapper {
 
     @Select(value = "select * from bitch_wallet where address = #{address}")
     BitchWallet findOneByAddress(@Param(value = "address") String address) throws Exception;
+    
+    @Select(value = "select * from bitch_wallet where coinname = #{coinname}")
+    List<BitchWallet> scanBitchWalletTable(@Param(value="coinname") String coinname) throws Exception;
+    
+    @Select(value = "select * from bitch_tx")
+	List<BitchWallet> selectBitchTx();
+    
+    @Select(value = "select * from bitch_wallet")
+	List<BitchWallet> selectAllBitchWallet();
+    
 }
