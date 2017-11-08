@@ -1,5 +1,7 @@
 package com.bi7.bitch.controller;
 
+import com.bi7.bitch.conf.CoinAttribute;
+import com.bi7.bitch.conf.CoinConfig;
 import com.bi7.bitch.conf.CoinName;
 import com.bi7.bitch.response.Msg;
 import com.bi7.bitch.service.WalletService;
@@ -27,6 +29,9 @@ public class WalletController {
     @Autowired
     private SignUtil signUtil;
 
+    @Autowired
+    private CoinConfig coinConfig;
+
     @RequestMapping("/applyaddress")
     public String applyAddress(@RequestParam("userid") int userId, @RequestParam("coinname") String coinname, @RequestParam("sign") String sign) {
 
@@ -39,7 +44,7 @@ public class WalletController {
             return Msg.PARAM_ERROR.toString();
         }
 
-        CoinName cn = CoinName.get(coinname);
+        CoinAttribute coinAttr = coinConfig.getContractAttrByName(coinname).
         if (cn == null) {
             log.warn("coinname not exist");
             return Msg.PARAM_ERROR.toString();

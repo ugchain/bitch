@@ -1,11 +1,7 @@
 package com.bi7.bitch.conf;
 
 import com.bi7.bitch.Logs;
-import com.bi7.bitch.chain.InputData;
-import com.bi7.bitch.chain.ethereum.ContractAddress;
-import com.bi7.bitch.chain.ethereum.EthereumInputData;
-import com.bi7.bitch.chain.ethereum.contract.AbstractEthContractCoin;
-import com.bi7.bitch.chain.ethereum.contract.ContractInputData;
+import com.bi7.bitch.chain.Chains;
 import com.bi7.bitch.dao.model.BitchWallet;
 import com.bi7.bitch.service.CoinService;
 import com.bi7.bitch.service.TxService;
@@ -18,14 +14,12 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameterNumber;
 import org.web3j.protocol.core.Request;
-import org.web3j.protocol.core.methods.response.*;
-import org.web3j.utils.Convert;
+import org.web3j.protocol.core.methods.response.EthBlock;
+import org.web3j.protocol.core.methods.response.EthBlockNumber;
+import org.web3j.protocol.core.methods.response.Transaction;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Optional;
 import java.util.function.Consumer;
 
 /**
@@ -37,7 +31,7 @@ import java.util.function.Consumer;
 public class ScheduledWork {
 
     @Autowired
-    GethConfig gethConfig;
+    private GethConfig gethConfig;
 
     @Autowired
     AppConfig config;
@@ -47,59 +41,34 @@ public class ScheduledWork {
     private Web3j web3;
 
     @Autowired
+    private Chains chains;
+
+    @Autowired
     private WalletService walletService;
 
 
     @Autowired
     private CoinService coinService;
-    
+
     @Autowired
     private TxService txService;
-    
-    
-    /**
-     * 定时扫描bitch-tx表，查看blockNumber=0(未打包的)的tx，进行处理
-     */
-    @Scheduled(fixedRate = 5000)
-    public void scanTableToUpdate() {
-    	txService.scanTableToUpdate();
-    }
-    
-    /**
-     * 定时扫描bitch-wallet表，没有eth币的账户打币
-     */
-    @Scheduled(fixedRate = 5000)
-    public void scanTableToAddEth() {
-    	txService.scanTableToAddEth();
-    }
-    
-    /**
-     * 按照任意时段，扫面tx表，汇总所有的手续费
-     */
-    @Scheduled(fixedRate = 5000)
-    public void scanBitchTx() {
-    	txService.statisFees();
-    }
-    
-    @Scheduled(fixedRate = 5000)
-    public void updateCurrentBlockNumber() {
-        Request<?, EthBlockNumber> ethBlockNumberRequest = web3.ethBlockNumber();
-        int blockNumber = 0;
-        try {
-            EthBlockNumber ethBlockNumber = ethBlockNumberRequest.send();
-            blockNumber = ethBlockNumber.getBlockNumber().intValue();
-        } catch (IOException e) {
-            e.printStackTrace();
-            Logs.scheduledLogger.error("ethBlockNumberRequest error ", e);
-            return;
-        } catch (Exception e) {
-            e.printStackTrace();
-            Logs.scheduledLogger.error("", e);
-            return;
-        }
-        coinService.setCurrentBlockNumber(blockNumber);
-    }
 
+//
+//    /**
+//     * 定时扫描bitch-tx表，查看blockNumber=0(未打包的)的tx，进行处理
+//     */
+//    @Scheduled(fixedRate = 5000)
+//    public void scanTableToUpdate() {
+//        txService.scanTableToUpdate();
+//    }
+//
+//    /**
+//     * 定时扫描bitch-wallet表，没有eth币的账户打币
+//     */
+//    @Scheduled(fixedRate = 5000)
+//    public void scanTableToAddEth() {
+//        txService.scanTableToAddEth();
+//    }
 
     /*
     scan bitch_coin
@@ -121,7 +90,6 @@ public class ScheduledWork {
         }
 
     }
-
 
     /*
     watch blockchain
@@ -148,13 +116,21 @@ public class ScheduledWork {
         try {
             while (blockNumber > currentBlocknumber) {
                 scanBlock(BigInteger.valueOf(currentBlocknumber), transaction -> {
-                    //是内部合约
-                    if (ContractAddress.isExistContractAddress(transaction.getTo())) {
-                        ethContractCharge(transaction);
+                    com.bi7.bitch.chain.ITransaction tx = chains.getTransaction(transaction);
+                    BitchWallet bitchWallet;
+                    try {
+                        bitchWallet = walletService.getBitchWalletByAddress(tx.getTo());
+                        if (bitchWallet == null) {
+                            return;
+                        }
+                    } catch (Exception e) {
+                        Logs.scheduledLogger.error("", e);
                         return;
                     }
-                    //eth charge
-                    ethCharge(transaction);
+
+                    if (coinService.saveCharge(bitchWallet, tx)) {
+                        Logs.scheduledLogger.info(String.format("%s charge: %s", tx.getCoinAttr().getName(), tx.toString()));
+                    }
 
                 });
                 currentBlocknumber++;
@@ -171,96 +147,13 @@ public class ScheduledWork {
         gethConfig.saveLastedBlockNumber(currentBlocknumber);
     }
 
-
     private void scanBlock(BigInteger blockNumber, Consumer<Transaction> consumer) throws IOException {
-//        System.out.println(String.format("scanBlock : %d",blockNumber));
         Request<?, EthBlock> ethBlockRequest = web3.ethGetBlockByNumber(new DefaultBlockParameterNumber(blockNumber), true);
         EthBlock ethBlock = ethBlockRequest.send();
         EthBlock.Block block = ethBlock.getBlock();
         block.getTransactions().forEach(transactionResult -> {
             Transaction tx = ((EthBlock.TransactionObject) transactionResult).get();
-//            System.out.println(String.format("txid: %s , to : %s",tx.getHash(),tx.getTo()));
             consumer.accept(tx);
         });
     }
-
-    private void ethContractCharge(Transaction transaction) {
-        AbstractEthContractCoin coin = ContractAddress.findCoinInstance(transaction.getTo());
-
-        try {
-            Optional<InputData> optInputData = coin.deserizeTransaction(transaction);
-            if (!optInputData.isPresent()) {
-                Logs.scheduledLogger.debug("not transfer fun call");
-                return;
-            }
-            ContractInputData idata = (ContractInputData) optInputData.get();
-
-            String chargeAddress = idata.getTo();
-
-            BitchWallet bitchWallet = walletService.getBitchWalletByAddress(chargeAddress);
-
-            if (bitchWallet != null) {
-                //为了真实的 gasUsed
-                Optional<TransactionReceipt> transactionTreceiptOpt = getTransactionReceipt(transaction.getHash());
-                if (!transactionTreceiptOpt.isPresent()) {
-                    //正常情况下不会发生
-                    return;
-                }
-                idata.setGasUsed(transactionTreceiptOpt.get().getGasUsed());
-                if(coinService.saveCharge(bitchWallet, idata, coin.getCoinName())){
-                    Logs.scheduledLogger.info(String.format("%s charge: %s", coin.toString(), idata.toString()));
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            Logs.scheduledLogger.error("", e);
-        }
-    }
-
-    private void ethCharge(Transaction transaction) {
-        try {
-            BitchWallet bitchWallet = walletService.getBitchWalletByAddress(transaction.getTo());
-            if (bitchWallet == null) {
-                return;
-            }
-
-            System.out.println(String.format("ethCharge: userid: %d ; address: %s",bitchWallet.getUserid(),bitchWallet.getAddress()));
-
-            //为了真实的 gasUsed
-            Optional<TransactionReceipt> transactionTreceiptOpt = getTransactionReceipt(transaction.getHash());
-            if (!transactionTreceiptOpt.isPresent()) {
-                //正常情况下不会发生
-                return;
-            }
-
-            EthereumInputData idata = new EthereumInputData();
-
-            idata.setTxid(transaction.getHash());
-            idata.setGasPrice(Convert.fromWei(new BigDecimal(transaction.getGasPrice()), Convert.Unit.GWEI).toBigInteger());
-            idata.setGasUsed(transactionTreceiptOpt.get().getGasUsed());
-            idata.setBlockNumber(transactionTreceiptOpt.get().getBlockNumber());
-            idata.setFrom(transaction.getFrom());
-            idata.setTo(transaction.getTo());
-            idata.setValue(transaction.getValue());
-
-            if(coinService.saveCharge(bitchWallet, idata, CoinName.ETH)){
-                Logs.scheduledLogger.info(String.format("ETH charge: %s", idata.toString()));
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            Logs.scheduledLogger.error("", e);
-        }
-    }
-
-
-    //TODO WARNING 重复 在 CoinService 里也有
-    private Optional<TransactionReceipt> getTransactionReceipt(String transactionHash) throws IOException {
-        EthGetTransactionReceipt transactionReceipt = (EthGetTransactionReceipt) this.web3.ethGetTransactionReceipt(transactionHash).send();
-        if (transactionReceipt.hasError()) {
-            throw new RuntimeException("Error processing request: " + transactionReceipt.getError().getMessage());
-        } else {
-            return transactionReceipt.getTransactionReceipt();
-        }
-    }
-
 }

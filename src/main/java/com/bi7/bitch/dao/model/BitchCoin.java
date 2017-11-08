@@ -28,6 +28,8 @@ public class BitchCoin {
     private int gasUsed;
     private int gasPrice;
     private int status;
+    private int chainStatus;//链上状态 for withdraw 1：审核通过，创建本条记录   2：创建nonce，以及生成rawTx，并send,且更新 from
+    private int nonce;//
     private Date addtime;
     private Date updatetime;
 
@@ -143,6 +145,22 @@ public class BitchCoin {
         this.addtime = addtime;
     }
 
+    public int getChainStatus() {
+        return chainStatus;
+    }
+
+    public void setChainStatus(int chainStatus) {
+        this.chainStatus = chainStatus;
+    }
+
+    public int getNonce() {
+        return nonce;
+    }
+
+    public void setNonce(int nonce) {
+        this.nonce = nonce;
+    }
+
     @Override
     public String toString() {
         return "BitchCoin{" +
@@ -159,6 +177,8 @@ public class BitchCoin {
                 ", gasUsed=" + gasUsed +
                 ", gasPrice=" + gasPrice +
                 ", status=" + status +
+                ", chainStatus=" + chainStatus +
+                ", nonce=" + nonce +
                 ", addtime=" + addtime +
                 ", updatetime=" + updatetime +
                 '}';

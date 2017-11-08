@@ -1,6 +1,6 @@
 package com.bi7.bitch.dao;
 
-import com.bi7.bitch.conf.CoinName;
+import com.bi7.bitch.conf.CoinAttribute;
 import com.bi7.bitch.dao.model.*;
 import com.bi7.bitch.mapper.primary.CoinMapper;
 import com.bi7.bitch.util.DecimalsUtil;
@@ -53,6 +53,22 @@ public class CoinDao {
         }
     }
 
+    /**
+     * 因为额度超支，所以要先储存审核状态，随后再真正体现
+     */
+    @Transactional(value = "bitchDataTransactionManager")
+    public synchronized void saveWithdrawAudit(BitchCoin bitchCoin) {
+        if (bitchCoin.getType() != CoinTypeEnum.WITHDRAW.getId()) {
+            throw new RuntimeException();
+        }
+
+        if (bitchCoin.getStatus() != WithdrawStatusEnum.AUDITING.getId()) {
+            throw new RuntimeException();
+        }
+
+        coinMapper.insert(bitchCoin);
+    }
+
     /*
     检测过程中 可以取得 rid/ txid / id
     检测 txid & status ，监听到 符合条件的 （blocknumber 满足要求），那么更新 status
@@ -95,7 +111,7 @@ public class CoinDao {
     insert bitch_coin
      */
     @Transactional(value = "bitchDataTransactionManager")
-    public synchronized void saveCharge(BitchCoin bitchCoin, CoinName coinName) {
+    public synchronized void saveCharge(BitchCoin bitchCoin, CoinAttribute coinAttr) {
         if (bitchCoin.getType() != CoinTypeEnum.CHARGE.getId()) {
             throw new RuntimeException();
         }
@@ -109,7 +125,7 @@ public class CoinDao {
         zr.setCoinname(bitchCoin.getCoinname());
         zr.setTxid(bitchCoin.getTxid());
 
-        String val = decimalsUtil.encode(bitchCoin.getValue(), coinName.getDecimals(), coinName.getLocalDecimals());
+        String val = decimalsUtil.encode(bitchCoin.getValue(), coinAttr.getDecimal(), coinAttr.getLocalDecimal());
         zr.setNum(val);
 //        zr.setFee();
         zr.setMum(val);

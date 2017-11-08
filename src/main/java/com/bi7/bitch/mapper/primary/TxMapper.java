@@ -24,15 +24,15 @@ public interface TxMapper {
     List<BitchTx> findUnPackageTx() throws Exception;
 
     @Select(value = "select * from bitch_tx where `time` > #{startTime} and `time` < #{endTime}")
-    List<BitchTx> findAllTxByDateRange(@Param(value = "startTime") Date startTime,@Param(value = "endTime") Date endTime);
+    List<BitchTx> findAllTxByDateRange(@Param(value = "startTime") Date startTime, @Param(value = "endTime") Date endTime);
 
     @Select(value = "update bitch_tx set blockNumber = #{blockNumber},fee = #{fee}, gasPrice  = #{gasPrice},gasUsed= #{gasUsed} where txid = #{txid}")
-    void update(@Param(value = "txid") String txid,@Param(value = "blockNumber")int blockNumber,@Param(value = "fee")String fee,@Param(value = "gasPrice") int gasPrice,@Param(value="gasUsed")int gasUsed) throws Exception;
-    
+    void update(@Param(value = "txid") String txid, @Param(value = "blockNumber") int blockNumber, @Param(value = "fee") String fee, @Param(value = "gasPrice") int gasPrice, @Param(value = "gasUsed") int gasUsed) throws Exception;
+
     @Select(value = "select * from bitch_tx where `from` = #{from}")
-    List<BitchTx> txInfoByAddress(@Param(value = "from") String from) throws Exception;
-    
-    @Select(value = "select * from bitch_tx")
-	List<BitchTx> selectBitchTx();
+    List<BitchTx> txInfoByFromAddress(@Param(value = "from") String from) throws Exception;
+
+    @Select(value = "select * from bitch_tx where blockNumber <> 0")
+    List<BitchTx> selectBitchTx();
 
 }

@@ -1,5 +1,8 @@
 package com.bi7.web3j.tx;
 
+import com.bi7.bitch.conf.GethConfig;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.Hash;
 import org.web3j.crypto.TransactionEncoder;
@@ -22,17 +25,20 @@ import java.math.BigInteger;
  * Created by foxer on 2017/9/3.
  * 获取txid 与 send 分开
  */
+@Component
 public class AsyncTransfer {
-    public static final BigInteger GAS_PRICE = BigInteger.valueOf(20000000000L);
-    protected Web3j web3j;
     final Credentials credentials;
-    private final byte chainId;
+    private byte chainId;
 
+    @Autowired
+    Web3j web3j;
 
-    protected AsyncTransfer(Web3j web3j, Credentials credentials, byte chainId) {
-        this.web3j = web3j;
+    @Autowired
+    GethConfig gethConfig;
+
+    protected AsyncTransfer(Credentials credentials) {
         this.credentials = credentials;
-        this.chainId = chainId;
+        this.chainId = gethConfig.getChainId();
     }
 
     protected String buildRawTx(BigInteger gasPrice, BigInteger gasLimit, String to, String data, BigInteger value) throws IOException {
@@ -41,7 +47,7 @@ public class AsyncTransfer {
         return this.sign(rawTransaction);
     }
 
-    protected String getFromAddress(){
+    protected String getFromAddress() {
         return this.credentials.getAddress();
     }
 //    public String send(BigInteger gasPrice, BigInteger gasLimit, String to, String data, BigInteger value) throws IOException {

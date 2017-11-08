@@ -20,11 +20,10 @@ import java.util.Date;
 @ConfigurationProperties(prefix = "bitch")
 public class AppConfig {
 
-
-
     private String secondaryDbPrefix;
     private String prikey;
     private boolean testing;
+    private String contractAddressConfigPath;
 
     public boolean isTesting() {
         return testing;
@@ -50,5 +49,11 @@ public class AppConfig {
         this.secondaryDbPrefix = secondaryDbPrefix;
     }
 
+    public String getContractAddressConfigPath() {
+        return contractAddressConfigPath;
+    }
 
+    public void setContractAddressConfigPath(String contractAddressConfigPath) {
+        this.contractAddressConfigPath = contractAddressConfigPath;
+    }
 }

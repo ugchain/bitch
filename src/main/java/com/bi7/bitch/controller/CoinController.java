@@ -1,6 +1,6 @@
 package com.bi7.bitch.controller;
 
-import com.bi7.bitch.conf.CoinName;
+import com.bi7.bitch.conf.CoinConfig;
 import com.bi7.bitch.response.Msg;
 import com.bi7.bitch.service.CoinService;
 import com.bi7.bitch.util.SignUtil;
@@ -27,6 +27,9 @@ public class CoinController {
 
     @Autowired
     private CoinService coinService;
+
+    @Autowired
+    private CoinConfig coinConfig;
 
     @RequestMapping("/withdraw")
     public String withdraw(@RequestParam("zcid") int zcId, @RequestParam("userid") int userId, @RequestParam("address") String address,
@@ -57,12 +60,6 @@ public class CoinController {
             return Msg.PARAM_ERROR.toString();
         }
 
-        CoinName cn = CoinName.get(coinname);
-        if (cn == null) {
-            log.warn("coinname not exist");
-            return Msg.PARAM_ERROR.toString();
-        }
-
         boolean checkResult = signUtil.checkSign(sign, new HashMap<String, Object>() {
             {
                 put("zcid", zcId);
@@ -78,7 +75,12 @@ public class CoinController {
                     zcId, userId, address, coinname, value, fee, sign));
             return Msg.PARAM_ERROR.toString();
         }
-        return coinService.withdraw(zcId, userId, address, cn, value, fee).toString();
-    }
 
+        return coinConfig.getContractAttrByName(coinname).map(cn ->
+                coinService.withdraw(zcId, userId, address, cn, value, fee).toString()
+        ).orElseGet(() -> {
+            log.warn("coinname not exist");
+            return Msg.PARAM_ERROR.toString();
+        });
+    }
 }

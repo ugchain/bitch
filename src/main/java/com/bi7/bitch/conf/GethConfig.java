@@ -28,8 +28,9 @@ public class GethConfig {
 
     private final static Log log = LogFactory.getLog(GethConfig.class);
 
+    private final static BigInteger MIN_CONFIRM_BLOCK_COUNT = new BigInteger("10");
     @Autowired
-    AppConfig config;
+    private AppConfig config;
 
     private String ethHttpUrl;
     private String keystoreFilesDirectory;
@@ -39,6 +40,8 @@ public class GethConfig {
     private String etcHttpUrl;
     private BigInteger withdrawGasPrice;
     private BigInteger withdrawGasLimit;
+    private BigInteger ethMinTransVal;
+    private BigInteger ethWithdrawLimit;
 
     private byte chainId = ChainId.MAIN_NET;
 
@@ -106,17 +109,9 @@ public class GethConfig {
     public void setCredentials(String credentialsPath) {
         try {
             credentials = WalletUtils.loadCredentials(this.getKeystorePassPhrase(), credentialsPath);
-        } catch (IOException e) {
+        } catch (IOException | CipherException e) {
             log.error("", e);
             e.printStackTrace();
-            System.exit(1);
-        } catch (CipherException e) {
-            e.printStackTrace();
-            log.error("", e);
-            System.exit(1);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error("", e);
             System.exit(1);
         }
     }
@@ -142,6 +137,7 @@ public class GethConfig {
         return org.web3j.protocol.Web3j.build(new HttpService(getEthHttpUrl()));
     }
 
+
     public int getStartBlockNumber() {
         return startBlockNumber;
     }
@@ -154,9 +150,7 @@ public class GethConfig {
         String ret = null;
         try {
             ret = Files.readString(new File(keystorePassPhrase));
-            if (ret == null) {
-                throw new Exception(String.format("fileRead error keystorePassPhrasePath: %s", keystorePassPhrase));
-            }
+
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(1);
@@ -169,6 +163,7 @@ public class GethConfig {
             return;
         }
         startBlockNumber = blockNumber;
+        //TODO 调试模式需要重构
         if (config.isTesting()) {
             return;
         }
@@ -198,5 +193,24 @@ public class GethConfig {
         this.blockNumberFilePath = blockNumberFilePath;
     }
 
+    public BigInteger getEthMinTransVal() {
+        return ethMinTransVal;
+    }
+
+    public void setEthMinTransVal(BigInteger ethMinTransVal) {
+        this.ethMinTransVal = ethMinTransVal;
+    }
+
+    public BigInteger getEthWithdrawLimit() {
+        return ethWithdrawLimit;
+    }
+
+    public void setEthWithdrawLimit(BigInteger ethWithdrawLimit) {
+        this.ethWithdrawLimit = ethWithdrawLimit;
+    }
+
+    public boolean isConfirmed(BigInteger blockNumber) {
+        return new BigInteger(String.valueOf(startBlockNumber)).subtract(blockNumber).compareTo(MIN_CONFIRM_BLOCK_COUNT) > 0;
+    }
 
 }

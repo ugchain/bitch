@@ -2,7 +2,7 @@ package com.bi7.bitch.service;
 
 import com.bi7.bitch.Logs;
 import com.bi7.bitch.conf.AppConfig;
-import com.bi7.bitch.conf.CoinName;
+import com.bi7.bitch.conf.CoinAttribute;
 import com.bi7.bitch.conf.GethConfig;
 import com.bi7.bitch.dao.model.BitchWallet;
 import org.apache.commons.logging.Log;
@@ -35,7 +35,7 @@ public class Web3jService {
     @Autowired
     private Web3j web3;
 
-    public BitchWallet createAddress(int userId, CoinName coinname) {
+    public BitchWallet createAddress(int userId, CoinAttribute coinAttr) {
         String fileName = null;
         try {
             fileName = WalletUtils.generateFullNewWalletFile(gethConfig.getKeystorePassPhrase(), new File(gethConfig.getKeystoreFilesDirectory()));
@@ -55,7 +55,7 @@ public class Web3jService {
 
         BitchWallet bitchWallet = new BitchWallet();
         bitchWallet.setAddtime(new Date());
-        bitchWallet.setCoinname(coinname.getRealCoinName());
+        bitchWallet.setCoinname(coinAttr.getRealCoinName());
         bitchWallet.setUserid(userId);
         bitchWallet.setAddress(address);
         bitchWallet.setFilename(keystroreFile.getName());
@@ -64,7 +64,7 @@ public class Web3jService {
             bitchWallet.setSha3(Hash.sha3(content));
             bitchWallet.setKeystore(content);
             Logs.addressCreateLogger.info(String.format("createAddress| userid: %s|coinname: %s| address: %s| sha3: %s",
-                    userId, coinname.getCoinName(), address, bitchWallet.getSha3()));
+                    userId, coinAttr.getName(), address, bitchWallet.getSha3()));
         } catch (Exception e) {
             log.error("", e);
             return null;
@@ -72,19 +72,6 @@ public class Web3jService {
 
         return bitchWallet;
     }
-
-//    public EthereumInputData sendTransaction(String to, CoinName coinName, BigInteger value) throws Exception {
-//        TransactionReceipt ret = coinName.getCoin().transfer(to, value);
-//        EthereumInputData idata = new EthereumInputData();
-//        idata.setFrom(ret.getFrom());
-//        idata.setTo(to);
-//        idata.setBlockNumber(ret.getBlockNumber());//unknown
-//        idata.setTxid(ret.getTransactionHash());
-//        idata.setValue(value);
-//        idata.setGasUsed(ret.getGasUsed());
-//        idata.setGasPrice(gethConfig.getWithdrawGasPrice());
-//        return idata;
-//    }
 
     private String getFileContent(File file) throws Exception {
         try {
