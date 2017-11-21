@@ -5,7 +5,7 @@ package com.bi7.bitch.dao.model;
  */
 public enum WithdrawStatusEnum {
 
-    AUDITING(0), PENDING(1), SUCCESS(2), FAILURE(3);
+    AUDITING(0), PENDING(1), SUCCESS(2), FAILURE(3), RAWHANDLE(4);
     private int id;
 
     WithdrawStatusEnum(int id) {

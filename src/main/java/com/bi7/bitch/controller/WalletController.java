@@ -2,7 +2,6 @@ package com.bi7.bitch.controller;
 
 import com.bi7.bitch.conf.CoinAttribute;
 import com.bi7.bitch.conf.CoinConfig;
-import com.bi7.bitch.conf.CoinName;
 import com.bi7.bitch.response.Msg;
 import com.bi7.bitch.service.WalletService;
 import com.bi7.bitch.util.SignUtil;

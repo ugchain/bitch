@@ -85,6 +85,7 @@ public class CoinService {
 
             return new Msg(Status.OK);
         } else {
+            //小额提现，直接处理
             Transaction transaction = chains.newInstance(coinAttr, gethConfig.getCredentials());
 
             bitchCoin.setFrom(transaction.getFrom());
