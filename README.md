@@ -1,6 +1,6 @@
 
 
-### java服务
+### bitch 项目java服务
 
 * 地址申请
     代码上有示例
@@ -13,14 +13,14 @@
 * 提币广播服务
     代码上有示例
 
-### 离线任务-充值  张扬 负责
+### 离线任务-充值   负责
 crontab 1 min exec:
 检查区块确认数超过12 的 bitch_charge.status == 1 && movesay_myzr.status == 1 的记录，调用
 数据库事务：movesay_myzr.status = 2 && movesay_user_coin.coin += val；
 并且设 bitch_charge.status = 2；
 若发现 txid 不存在，设 status = 3；
 
-### 离线任务-提现  张扬 负责
+### 离线任务-提现   负责
 crontab 1min exec:
 检查 bitch_withdraw.status == 1 &&  movesay_myzc.status == 1 的记录 
 根据txid，检查，若确认数 超过12 ，那么将 2个数据库的 status 设为2 
