@@ -1,10 +1,10 @@
-package com.bi7.bitch.conf;
+package com.bi7.bitch;
 
-import com.bi7.bitch.Logs;
 import com.bi7.bitch.chain.Chains;
+import com.bi7.bitch.conf.AppConfig;
+import com.bi7.bitch.conf.GethConfig;
 import com.bi7.bitch.dao.model.BitchWallet;
 import com.bi7.bitch.service.CoinService;
-import com.bi7.bitch.service.TxService;
 import com.bi7.bitch.service.WalletService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
@@ -50,26 +50,6 @@ public class ScheduledWork {
     @Autowired
     private CoinService coinService;
 
-    @Autowired
-    private TxService txService;
-
-//
-//    /**
-//     * 定时扫描bitch-tx表，查看blockNumber=0(未打包的)的tx，进行处理
-//     */
-//    @Scheduled(fixedRate = 5000)
-//    public void scanTableToUpdate() {
-//        txService.scanTableToUpdate();
-//    }
-//
-//    /**
-//     * 定时扫描bitch-wallet表，没有eth币的账户打币
-//     */
-//    @Scheduled(fixedRate = 5000)
-//    public void scanTableToAddEth() {
-//        txService.scanTableToAddEth();
-//    }
-
     /*
     scan bitch_coin
     update blockNumer and status  where txid
@@ -82,13 +62,6 @@ public class ScheduledWork {
         } catch (Exception ee) {
             Logs.scheduledLogger.error("", ee);
         }
-
-        try {
-            coinService.scanWithdrawCoin();
-        } catch (Exception ee) {
-            Logs.scheduledLogger.error("", ee);
-        }
-
     }
 
     /*

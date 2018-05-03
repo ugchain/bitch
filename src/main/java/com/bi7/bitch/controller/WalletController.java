@@ -1,6 +1,5 @@
 package com.bi7.bitch.controller;
 
-import com.bi7.bitch.conf.CoinAttribute;
 import com.bi7.bitch.conf.CoinConfig;
 import com.bi7.bitch.response.Msg;
 import com.bi7.bitch.service.WalletService;
@@ -12,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.*;
+import java.util.HashMap;
 
 /**
  * Created by foxer on 2017/8/22.
@@ -42,13 +41,6 @@ public class WalletController {
             log.warn("userid <= 0 ");
             return Msg.PARAM_ERROR.toString();
         }
-
-        CoinAttribute coinAttr = coinConfig.getContractAttrByName(coinname).
-        if (cn == null) {
-            log.warn("coinname not exist");
-            return Msg.PARAM_ERROR.toString();
-        }
-
         boolean checkResult = signUtil.checkSign(sign, new HashMap<String, Object>() {
             {
                 put("userid", userId);
@@ -59,6 +51,11 @@ public class WalletController {
             log.warn(String.format("signCheck error,userid: %d, coinname: %s, sign: %s", userId, coinname, sign));
             return Msg.PARAM_ERROR.toString();
         }
-        return service.applyAddress(userId, cn).toString();
+        return coinConfig.getContractAttrByName(coinname).map(cn ->
+                service.applyAddress(userId, cn).toString()
+        ).orElseGet(() -> {
+            log.warn("coinname not exist");
+            return Msg.PARAM_ERROR.toString();
+        });
     }
 }

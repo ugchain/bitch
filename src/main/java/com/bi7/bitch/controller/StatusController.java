@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class StatusController {
 
     @Autowired
-    GethConfig gethConfig;
+    private GethConfig gethConfig;
 
     @RequestMapping("/eth-scan-blocknumber")
     public String ethBlockStatus() {
